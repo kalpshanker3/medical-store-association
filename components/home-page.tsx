@@ -153,6 +153,21 @@ export default function HomePage(appState: AppState) {
                   डेटाबेस टेस्ट करें
                 </Button>
                 
+                {/* Environment Debug Button */}
+                <Button
+                  onClick={() => {
+                    console.log("=== Environment Debug ===")
+                    console.log("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
+                    console.log("medo_NEXT_PUBLIC_SUPABASE_URL:", process.env.medo_NEXT_PUBLIC_SUPABASE_URL)
+                    console.log("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
+                    console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
+                    alert("Environment variables logged to console (F12 press karein)")
+                  }}
+                  className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                >
+                  🔧 Environment Check
+                </Button>
+                
 
               </div>
               <div className="relative h-72 sm:h-96 rounded-3xl sm:rounded-[2rem] overflow-hidden shadow-2xl group order-1 lg:order-2 border-4 border-white/50">
