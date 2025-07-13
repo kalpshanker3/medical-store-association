@@ -1,0 +1,27 @@
+{
+  "name": "फुटकर दवा व्यापार मंडल",
+  "short_name": "दवा मंडल",
+  "description": "Medical Store Owners Association - Supporting families and building community",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/placeholder.svg?height=192&width=192&text=दवा+मंडल",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/placeholder.svg?height=512&width=512&text=दवा+मंडल",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "medical", "social"],
+  "lang": "hi",
+  "dir": "ltr"
+}
