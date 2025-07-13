@@ -19,11 +19,26 @@ export async function sendOTP(phone: string): Promise<{ success: boolean; messag
   try {
     console.log("Sending OTP to:", phone)
     
+    // Check if Supabase is properly configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error("Supabase configuration missing")
+      return { success: false, message: "डेटाबेस कॉन्फ़िगरेशन त्रुटि" }
+    }
+
+    // Test database connection
+    const { data: testData, error: testError } = await supabase.from("otp_verifications").select("count").limit(1)
+    if (testError) {
+      console.error("Database connection test failed:", testError)
+      return { success: false, message: "डेटाबेस कनेक्शन त्रुटि" }
+    }
+
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
 
     // Set expiry time (5 minutes from now)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString()
+
+    console.log("Generated OTP:", otp, "Expires at:", expiresAt)
 
     // Delete any existing OTP for this phone
     const { error: deleteError } = await supabase.from("otp_verifications").delete().eq("phone", phone)
@@ -40,7 +55,7 @@ export async function sendOTP(phone: string): Promise<{ success: boolean; messag
 
     if (error) {
       console.error("Insert OTP error:", error)
-      throw error
+      return { success: false, message: `OTP भेजने में त्रुटि: ${error.message}` }
     }
 
     // In production, you would send SMS here

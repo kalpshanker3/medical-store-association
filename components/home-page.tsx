@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CreditCard, Sparkles, Heart, Users } from "lucide-react"
+import { CreditCard, Sparkles, Heart, Users, Database } from "lucide-react"
 import Navbar from "./navbar"
 import type { AppState } from "../app/page"
 import { Badge } from "@/components/ui/badge"
+import { supabase } from "../lib/supabase"
 
 
 // Gallery images will be fetched from database
@@ -64,6 +65,25 @@ export default function HomePage(appState: AppState) {
     return () => clearInterval(refreshTimer)
   }, [])
 
+  // Test database connection
+  const testDatabaseConnection = async () => {
+    try {
+      console.log("Testing database connection...")
+      const { data, error } = await supabase.from("otp_verifications").select("count").limit(1)
+      
+      if (error) {
+        console.error("Database connection failed:", error)
+        alert(`डेटाबेस कनेक्शन त्रुटि: ${error.message}`)
+      } else {
+        console.log("Database connection successful:", data)
+        alert("✅ डेटाबेस कनेक्शन सफल!")
+      }
+    } catch (error) {
+      console.error("Database test error:", error)
+      alert("डेटाबेस टेस्ट में त्रुटि")
+    }
+  }
+
 
 
   return (
@@ -97,6 +117,15 @@ export default function HomePage(appState: AppState) {
                   <Heart className="h-6 w-6 text-red-500 animate-pulse drop-shadow-sm" />
                   <span className="font-semibold text-center sm:text-left">सहयोग • भाईचारा • एकजुटता</span>
                 </div>
+                
+                {/* Database Test Button */}
+                <Button
+                  onClick={testDatabaseConnection}
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                >
+                  <Database className="h-5 w-5 mr-2" />
+                  डेटाबेस टेस्ट करें
+                </Button>
                 
 
               </div>

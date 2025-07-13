@@ -47,7 +47,6 @@ export default function RegisterPage(appState: AppState) {
     branch: "",
     nomineeName: "",
     nomineeRelation: "",
-    customNomineeRelation: "",
     nomineePhone: "",
     nomineeAccountNumber: "",
     nomineeIfsc: "",
@@ -122,8 +121,7 @@ export default function RegisterPage(appState: AppState) {
           ifsc: formData.ifsc,
           branch: formData.branch,
           nominee_name: formData.nomineeName,
-          nominee_relation:
-            formData.nomineeRelation === "अन्य" ? formData.customNomineeRelation : formData.nomineeRelation,
+          nominee_relation: formData.nomineeRelation,
           nominee_phone: formData.nomineePhone,
           nominee_account_number: formData.nomineeAccountNumber,
           nominee_ifsc: formData.nomineeIfsc,
@@ -134,7 +132,6 @@ export default function RegisterPage(appState: AppState) {
 
         if (registerResult.success && registerResult.user) {
           appState.setUser({
-            id: registerResult.user.id,
             name: registerResult.user.name,
             phone: registerResult.user.phone,
             alternatePhone: registerResult.user.alternate_phone,
@@ -154,7 +151,6 @@ export default function RegisterPage(appState: AppState) {
             branch: registerResult.user.branch || "",
             nomineeName: registerResult.user.nominee_name,
             nomineeRelation: registerResult.user.nominee_relation,
-            customNomineeRelation: registerResult.user.custom_nominee_relation,
             nomineePhone: registerResult.user.nominee_phone,
             nomineeAccountNumber: registerResult.user.nominee_account_number,
             nomineeIfsc: registerResult.user.nominee_ifsc,
@@ -511,38 +507,13 @@ export default function RegisterPage(appState: AppState) {
                       <Heart className="h-4 w-4" />
                       रिश्ता *
                     </label>
-                    <select
+                    <Input
                       required
+                      placeholder="जैसे: पत्नी, पति, बेटा, बेटी, माता, पिता, भाई, बहन, आदि"
                       value={formData.nomineeRelation}
-                      onChange={(e) => {
-                        setFormData({ ...formData, nomineeRelation: e.target.value })
-                        if (e.target.value !== "अन्य") {
-                          setFormData({ ...formData, customNomineeRelation: "" })
-                        }
-                      }}
-                      className="w-full p-3 border-2 border-pink-200 rounded-xl focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg bg-white cursor-pointer"
-                    >
-                      <option value="" className="text-gray-500">रिश्ता चुनें</option>
-                      <option value="पत्नी" className="text-black">पत्नी</option>
-                      <option value="पति" className="text-black">पति</option>
-                      <option value="बेटा" className="text-black">बेटा</option>
-                      <option value="बेटी" className="text-black">बेटी</option>
-                      <option value="माता" className="text-black">माता</option>
-                      <option value="पिता" className="text-black">पिता</option>
-                      <option value="भाई" className="text-black">भाई</option>
-                      <option value="बहन" className="text-black">बहन</option>
-                      <option value="अन्य" className="text-black">अन्य</option>
-                    </select>
-
-                    {formData.nomineeRelation === "अन्य" && (
-                      <Input
-                        required
-                        placeholder="कृपया रिश्ता लिखें"
-                        value={formData.customNomineeRelation}
-                        onChange={(e) => setFormData({ ...formData, customNomineeRelation: e.target.value })}
-                        className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg mt-2"
-                      />
-                    )}
+                      onChange={(e) => setFormData({ ...formData, nomineeRelation: e.target.value })}
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
                   </div>
                 </div>
 
