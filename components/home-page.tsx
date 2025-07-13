@@ -69,6 +69,14 @@ export default function HomePage(appState: AppState) {
   const testDatabaseConnection = async () => {
     try {
       console.log("Testing database connection...")
+      
+      // Debug environment variables
+      console.log("Environment check:")
+      console.log("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "Present" : "Missing")
+      console.log("medo_NEXT_PUBLIC_SUPABASE_URL:", process.env.medo_NEXT_PUBLIC_SUPABASE_URL ? "Present" : "Missing")
+      console.log("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
+      console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
+      
       const { data, error } = await supabase.from("otp_verifications").select("count").limit(1)
       
       if (error) {
