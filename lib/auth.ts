@@ -19,8 +19,11 @@ export async function sendOTP(phone: string): Promise<{ success: boolean; messag
   try {
     console.log("Sending OTP to:", phone)
     
-    // Check if Supabase is properly configured
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    // Check if Supabase is properly configured (support both with and without medo_ prefix)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.medo_NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
       console.error("Supabase configuration missing")
       return { success: false, message: "डेटाबेस कॉन्फ़िगरेशन त्रुटि" }
     }
