@@ -14,6 +14,7 @@ import MembershipPaymentPage from "../components/membership-payment-page"
 import AdminPage from "../components/admin-page"
 import LoginPage from "../components/login-page"
 import NotificationsPage from "../components/notifications-page"
+import { ErrorBoundary } from "../components/error-boundary"
 
 export type Page =
   | "home"
@@ -197,5 +198,9 @@ export default function MedicalStoreAssociation() {
     }
   }
 
-  return <div className="font-sans">{renderCurrentPage()}</div>
+  return (
+    <ErrorBoundary>
+      <div className="font-sans">{renderCurrentPage()}</div>
+    </ErrorBoundary>
+  )
 }

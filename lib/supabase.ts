@@ -1,10 +1,23 @@
 import { createClient } from "@supabase/supabase-js"
 
 // Support both with and without medo_ prefix
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.medo_NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.medo_NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Check if environment variables are available
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("Supabase environment variables are missing!")
+  console.error("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
+  console.error("medo_NEXT_PUBLIC_SUPABASE_URL:", process.env.medo_NEXT_PUBLIC_SUPABASE_URL)
+  console.error("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
+  console.error("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
+}
+
+// Create Supabase client with fallback values to prevent crashes
+export const supabase = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-key"
+)
 
 // Database types
 export interface User {
