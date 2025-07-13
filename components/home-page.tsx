@@ -77,18 +77,36 @@ export default function HomePage(appState: AppState) {
       console.log("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
       console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
       
-      const { data, error } = await supabase.from("otp_verifications").select("count").limit(1)
+      // Test basic connection first
+      const { data: healthData, error: healthError } = await supabase.from("users").select("count").limit(1)
       
-      if (error) {
-        console.error("Database connection failed:", error)
-        alert(`डेटाबेस कनेक्शन त्रुटि: ${error.message}`)
+      if (healthError) {
+        console.error("Health check failed:", healthError)
+        
+        // Try a simpler test
+        const { data: simpleData, error: simpleError } = await supabase.rpc('version')
+        
+        if (simpleError) {
+          console.error("Simple test also failed:", simpleError)
+          alert(`डेटाबेस कनेक्शन त्रुटि: ${simpleError.message}\n\nकृपया इंटरनेट कनेक्शन चेक करें।`)
+        } else {
+          console.log("Simple connection successful:", simpleData)
+          alert("✅ बेसिक कनेक्शन सफल!")
+        }
       } else {
-        console.log("Database connection successful:", data)
+        console.log("Database connection successful:", healthData)
         alert("✅ डेटाबेस कनेक्शन सफल!")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Database test error:", error)
-      alert("डेटाबेस टेस्ट में त्रुटि")
+      
+      if (error.message?.includes('fetch')) {
+        alert("🌐 नेटवर्क त्रुटि: कृपया इंटरनेट कनेक्शन चेक करें")
+      } else if (error.message?.includes('CORS')) {
+        alert("🔒 CORS त्रुटि: ब्राउज़र सेटिंग्स चेक करें")
+      } else {
+        alert(`डेटाबेस टेस्ट में त्रुटि: ${error.message}`)
+      }
     }
   }
 

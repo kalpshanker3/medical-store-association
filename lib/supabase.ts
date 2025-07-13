@@ -16,7 +16,24 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Create Supabase client with fallback values to prevent crashes
 export const supabase = createClient(
   supabaseUrl || "https://placeholder.supabase.co",
-  supabaseAnonKey || "placeholder-key"
+  supabaseAnonKey || "placeholder-key",
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'medical-store-association'
+      }
+    }
+  }
 )
 
 // Database types

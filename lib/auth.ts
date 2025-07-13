@@ -33,7 +33,20 @@ export async function sendOTP(phone: string): Promise<{ success: boolean; messag
     console.log(`OTP would be sent to ${phone} in production`)
     console.log(`Test OTP for ${phone}: 123456`)
 
-    return { success: true, message: "OTP भेजा गया है (टेस्ट मोड)" }
+    // Check if we can reach Supabase
+    try {
+      const { data, error } = await supabase.from("users").select("count").limit(1)
+      if (error) {
+        console.log("Database not accessible, using offline mode")
+        return { success: true, message: "OTP भेजा गया है (ऑफ़लाइन मोड)" }
+      } else {
+        console.log("Database accessible")
+        return { success: true, message: "OTP भेजा गया है (टेस्ट मोड)" }
+      }
+    } catch (error) {
+      console.log("Network error, using offline mode")
+      return { success: true, message: "OTP भेजा गया है (ऑफ़लाइन मोड)" }
+    }
   } catch (error) {
     console.error("Error sending OTP:", error)
     return { success: false, message: "OTP भेजने में त्रुटि" }
