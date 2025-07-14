@@ -22,7 +22,7 @@ import {
   EyeOff,
 } from "lucide-react"
 import Navbar from "./navbar"
-import type { AppState } from "../app/page"
+import type { AppState } from "../lib/types"
 import { registerUser } from "../lib/auth"
 
 export default function RegisterPage(appState: AppState) {
@@ -110,7 +110,8 @@ export default function RegisterPage(appState: AppState) {
       if (registerResult.success && registerResult.user) {
         appState.setUser(registerResult.user)
         appState.setIsLoggedIn(true)
-        setSuccess("रजिस्ट्रेशन सफल! आपका आवेदन समीक्षाधीन है।")
+        setSuccess("रजिस्ट्रेशन सफल! आपका आवेदन समीक्षा में है।")
+        appState.setCurrentPage("status")
       } else {
         setError(registerResult.message)
       }
@@ -123,7 +124,7 @@ export default function RegisterPage(appState: AppState) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-100">
-      <Navbar {...appState} />
+      <Navbar />
       <div className="container-responsive py-4 sm:py-6 lg:py-8">
         <Card className="max-w-5xl mx-auto shadow-2xl rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-white via-blue-50 to-cyan-50">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-t-2xl sm:rounded-t-3xl p-4 sm:p-6">

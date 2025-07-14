@@ -7,6 +7,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import type { User } from "@/lib/supabase"
 import { createContext, useContext } from "react"
+import StatusPage from "@/components/status-page"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -162,7 +163,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           disableTransitionOnChange
         >
           <AuthContext.Provider value={{ user, isLoggedIn, setUser, setIsLoggedIn, logout }}>
-            {children}
+            {/* Block all pages except status for pending/rejected users */}
+            {isLoggedIn && user && (user.status === "pending" || user.status === "rejected") ? (
+              <StatusPage user={user} isLoggedIn={isLoggedIn} setUser={setUser} setIsLoggedIn={setIsLoggedIn} setCurrentPage={() => {}} />
+            ) : (
+              children
+            )}
           </AuthContext.Provider>
         </ThemeProvider>
       </body>

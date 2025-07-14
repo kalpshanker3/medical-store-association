@@ -3,13 +3,16 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Home, Users, Bell, User, Building, Menu, X, ArrowLeft } from "lucide-react"
-import type { AppState } from "../app/page"
+// import type { AppState } from "../app/page"
 import Link from "next/link"
 import { useAuth } from "../app/layout"
 
 export default function Navbar() {
   const { isLoggedIn, user, logout, setUser, setIsLoggedIn } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Only show Profile and Contact Us if user is pending
+  const isPending = isLoggedIn && user && (user.status === "pending" || user.status === "rejected");
 
   const handleLogout = () => {
     setIsLoggedIn(false)
@@ -42,35 +45,55 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           {isLoggedIn ? (
             <div className="hidden md:flex items-center space-x-3">
-              <Link href="/"><Button
-                variant="ghost"
-                className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
-              >
-                <Home className="h-5 w-5 mr-2" />
-                होम
-              </Button></Link>
-              <Link href="/groups"><Button
-                variant="ghost"
-                className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
-              >
-                <Users className="h-5 w-5 mr-2" />
-                ग्रुप्स
-              </Button></Link>
-              <Link href="/notifications"><Button
-                variant="ghost"
-                className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2 relative"
-              >
-                <Bell className="h-5 w-5 mr-2" />
-                नोटिफिकेशन
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-400 to-pink-500 rounded-full animate-pulse shadow-lg"></span>
-              </Button></Link>
-              <Button
-                variant="ghost"
-                className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
-              >
-                <User className="h-5 w-5 mr-2" />
-                {user?.name || "प्रोफ़ाइल"}
-              </Button>
+              {isPending ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
+                  >
+                    <User className="h-5 w-5 mr-2" />
+                    {user?.name || "प्रोफ़ाइल"}
+                  </Button>
+                  <Link href="/contact"><Button
+                    variant="ghost"
+                    className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
+                  >
+                    संपर्क करें
+                  </Button></Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/"><Button
+                    variant="ghost"
+                    className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
+                  >
+                    <Home className="h-5 w-5 mr-2" />
+                    होम
+                  </Button></Link>
+                  <Link href="/groups"><Button
+                    variant="ghost"
+                    className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
+                  >
+                    <Users className="h-5 w-5 mr-2" />
+                    ग्रुप्स
+                  </Button></Link>
+                  <Link href="/notifications"><Button
+                    variant="ghost"
+                    className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2 relative"
+                  >
+                    <Bell className="h-5 w-5 mr-2" />
+                    नोटिफिकेशन
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-400 to-pink-500 rounded-full animate-pulse shadow-lg"></span>
+                  </Button></Link>
+                  <Button
+                    variant="ghost"
+                    className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
+                  >
+                    <User className="h-5 w-5 mr-2" />
+                    {user?.name || "प्रोफ़ाइल"}
+                  </Button>
+                </>
+              )}
               <Button
                 className="bg-gradient-to-r from-red-500 via-pink-500 to-rose-500 hover:from-red-600 hover:via-pink-600 hover:to-rose-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95 transition-all duration-300 btn-mobile border border-white/20 backdrop-blur-sm"
                 onClick={handleLogout}
