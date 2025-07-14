@@ -435,6 +435,7 @@ export default function RegisterPage(appState: AppState) {
                       खाता नंबर
                     </label>
                     <Input
+                      required
                       placeholder="खाता नंबर"
                       value={formData.accountNumber}
                       onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
@@ -447,6 +448,7 @@ export default function RegisterPage(appState: AppState) {
                       IFSC कोड
                     </label>
                     <Input
+                      required
                       placeholder="IFSC कोड"
                       value={formData.ifsc}
                       onChange={(e) => setFormData({ ...formData, ifsc: e.target.value })}
@@ -459,6 +461,7 @@ export default function RegisterPage(appState: AppState) {
                       शाखा
                     </label>
                     <Input
+                      required
                       placeholder="बैंक शाखा"
                       value={formData.branch}
                       onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
@@ -480,6 +483,7 @@ export default function RegisterPage(appState: AppState) {
                       नामांकित का नाम
                     </label>
                     <Input
+                      required
                       placeholder="नामांकित का नाम"
                       value={formData.nomineeName}
                       onChange={(e) => setFormData({ ...formData, nomineeName: e.target.value })}
@@ -492,6 +496,7 @@ export default function RegisterPage(appState: AppState) {
                       संबंध
                     </label>
                     <Input
+                      required
                       placeholder="संबंध (पिता, पुत्र, आदि)"
                       value={formData.nomineeRelation}
                       onChange={(e) => setFormData({ ...formData, nomineeRelation: e.target.value })}
@@ -504,6 +509,7 @@ export default function RegisterPage(appState: AppState) {
                       फोन नंबर
                     </label>
                     <Input
+                      required
                       placeholder="नामांकित का फोन"
                       value={formData.nomineePhone}
                       onChange={(e) => setFormData({ ...formData, nomineePhone: e.target.value })}
@@ -519,6 +525,7 @@ export default function RegisterPage(appState: AppState) {
                       खाता नंबर
                     </label>
                     <Input
+                      required
                       placeholder="नामांकित का खाता"
                       value={formData.nomineeAccountNumber}
                       onChange={(e) => setFormData({ ...formData, nomineeAccountNumber: e.target.value })}
@@ -531,6 +538,7 @@ export default function RegisterPage(appState: AppState) {
                       IFSC कोड
                     </label>
                     <Input
+                      required
                       placeholder="नामांकित का IFSC"
                       value={formData.nomineeIfsc}
                       onChange={(e) => setFormData({ ...formData, nomineeIfsc: e.target.value })}
@@ -543,6 +551,7 @@ export default function RegisterPage(appState: AppState) {
                       शाखा
                     </label>
                     <Input
+                      required
                       placeholder="नामांकित का बैंक"
                       value={formData.nomineeBranch}
                       onChange={(e) => setFormData({ ...formData, nomineeBranch: e.target.value })}
