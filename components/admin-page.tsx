@@ -103,6 +103,10 @@ export default function AdminPage(appState: AppState) {
   const [registrationForms, setRegistrationForms] = useState<any[]>([])
   const [allMembers, setAllMembers] = useState<any[]>([])
   const [galleryImages, setGalleryImages] = useState<any[]>([])
+  const [notificationTitle, setNotificationTitle] = useState("")
+  const [notificationType, setNotificationType] = useState("info")
+  const [notificationBody, setNotificationBody] = useState("")
+  const [notifications, setNotifications] = useState<any[]>([])
 
   // UI states
   const [selectedMember, setSelectedMember] = useState("")
@@ -112,6 +116,7 @@ export default function AdminPage(appState: AppState) {
   const [customAccidentType, setCustomAccidentType] = useState("")
   const [newImageTitle, setNewImageTitle] = useState("")
   const [newImageCategory, setNewImageCategory] = useState("events")
+  const [newImageFile, setNewImageFile] = useState<File | null>(null)
 
   // Fetch all data
   const fetchAllData = async () => {
@@ -237,24 +242,37 @@ export default function AdminPage(appState: AppState) {
 
   // Gallery Add/Delete
   const handleAddImage = async () => {
-    if (!newImageTitle.trim()) return
+    if (!newImageTitle.trim() || !newImageFile) {
+      setError('कृपया शीर्षक और फ़ाइल चुनें।')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
+      const filePath = `${Date.now()}_${newImageFile.name}`
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('gallery').upload(filePath, newImageFile)
+      if (uploadError || !uploadData) throw uploadError || new Error('Upload failed')
+      // Get the public URL
+      const { data: urlData, error: urlError } = supabase.storage.from('gallery').getPublicUrl(filePath)
+      if (urlError || !urlData || !urlData.publicUrl) throw urlError || new Error('Failed to get public URL')
+      const imageUrl = urlData.publicUrl
+      // Insert into gallery table
       const { error } = await supabase
-        .from("gallery")
+        .from('gallery')
         .insert({
           title: newImageTitle,
-          image_url: `/placeholder.svg?height=300&width=400&text=${encodeURIComponent(newImageTitle)}`,
+          image_url: imageUrl,
           category: newImageCategory,
           uploaded_by: appState.user.id,
         })
       if (error) throw error
       setNewImageTitle("")
       setNewImageCategory("events")
+      setNewImageFile(null)
       await fetchAllData()
     } catch (err: any) {
-      setError(err.message || "Failed to add image")
+      setError(err.message || 'Failed to add image')
     } finally {
       setLoading(false)
     }
@@ -321,6 +339,71 @@ export default function AdminPage(appState: AppState) {
       youth: "युवा",
     }
     return categoryMap[category] || category
+  }
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
+      if (error) throw error
+      setNotifications(data || [])
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch notifications")
+    }
+  }
+
+  useEffect(() => {
+    fetchNotifications()
+  }, [])
+
+  // Add notification
+  const handleAddNotification = async () => {
+    if (!notificationTitle.trim() || !notificationBody.trim()) {
+      setError("कृपया शीर्षक और विवरण भरें।")
+      return
+    }
+    setLoading(true)
+    setError(null)
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .insert({
+          title: notificationTitle,
+          type: notificationType,
+          body: notificationBody,
+          created_by: appState.user.id,
+        })
+      if (error) throw error
+      setNotificationTitle("")
+      setNotificationType("info")
+      setNotificationBody("")
+      await fetchNotifications()
+    } catch (err: any) {
+      setError(err.message || "Failed to add notification")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Delete notification
+  const handleDeleteNotification = async (id: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .eq("id", id)
+      if (error) throw error
+      await fetchNotifications()
+    } catch (err: any) {
+      setError(err.message || "Failed to delete notification")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -699,8 +782,10 @@ export default function AdminPage(appState: AppState) {
                               type="text"
                               placeholder="सूचना का शीर्षक"
                               className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500"
+                              value={notificationTitle}
+                              onChange={e => setNotificationTitle(e.target.value)}
                             />
-                            <select className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500">
+                            <select className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500" value={notificationType} onChange={e => setNotificationType(e.target.value)}>
                               <option value="info">जानकारी</option>
                               <option value="warning">चेतावनी</option>
                               <option value="success">सफलता</option>
@@ -711,8 +796,10 @@ export default function AdminPage(appState: AppState) {
                             placeholder="सूचना का विवरण"
                             rows={4}
                             className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500"
+                            value={notificationBody}
+                            onChange={e => setNotificationBody(e.target.value)}
                           />
-                          <Button className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 rounded-xl font-bold" disabled={loading}>
+                          <Button className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 rounded-xl font-bold" disabled={loading} onClick={handleAddNotification}>
                             <Bell className="h-4 w-4 mr-2" />
                             सूचना प्रकाशित करें
                           </Button>
@@ -723,16 +810,12 @@ export default function AdminPage(appState: AppState) {
                       <div className="bg-white p-6 rounded-xl shadow-lg">
                         <h4 className="font-bold text-gray-800 mb-4">मौजूदा सूचनाएं</h4>
                         <div className="space-y-3">
-                          {[
-                            { id: 1, title: "नई सदस्यता शुल्क दरें", type: "warning", date: "2024-03-15" },
-                            { id: 2, title: "वार्षिक सभा की सूचना", type: "info", date: "2024-03-10" },
-                            { id: 3, title: "आपातकालीन सहायता", type: "emergency", date: "2024-03-08" },
-                          ].map((notification) => (
+                          {notifications.map((notification) => (
                             <div
                               key={notification.id}
                               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                             >
-                              <div className="flex-1">
+                              <div>
                                 <h5 className="font-semibold text-gray-800">{notification.title}</h5>
                                 <div className="flex items-center gap-2 mt-1">
                                   <Badge
@@ -751,13 +834,13 @@ export default function AdminPage(appState: AppState) {
                                     {notification.type === "success" && "सफलता"}
                                     {notification.type === "info" && "जानकारी"}
                                   </Badge>
-                                  <span className="text-sm text-gray-500">{notification.date}</span>
+                                  <span className="text-sm text-gray-500">{notification.created_at ? notification.created_at.split('T')[0] : ''}</span>
                                 </div>
                               </div>
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => console.log(`Delete notification ${notification.id}`)}
+                                onClick={() => handleDeleteNotification(notification.id)}
                                 disabled={loading}
                               >
                                 <X className="h-4 w-4 mr-1" />
@@ -815,6 +898,7 @@ export default function AdminPage(appState: AppState) {
                             type="file"
                             accept="image/*"
                             className="rounded-xl border-2 border-pink-200 focus:border-pink-500"
+                            onChange={e => setNewImageFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
                           />
                           <Button
                             onClick={handleAddImage}

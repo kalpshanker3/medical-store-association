@@ -42,10 +42,16 @@ export default function GalleryPage(appState: AppState) {
     }
     try {
       const filePath = `${Date.now()}_${file.name}`
+      // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage.from('gallery').upload(filePath, file)
-      if (uploadError) throw uploadError
-      const { data: urlData } = supabase.storage.from('gallery').getPublicUrl(filePath)
+      console.log('Upload result:', uploadData, uploadError)
+      if (uploadError || !uploadData) throw uploadError || new Error('Upload failed')
+      // Get the public URL
+      const { data: urlData, error: urlError } = supabase.storage.from('gallery').getPublicUrl(filePath)
+      console.log('Public URL result:', urlData, urlError)
+      if (urlError || !urlData || !urlData.publicUrl) throw urlError || new Error('Failed to get public URL')
       const imageUrl = urlData.publicUrl
+      // Insert into gallery table
       const { error: dbError } = await supabase.from('gallery').insert([
         { title, image_url: imageUrl }
       ])
@@ -56,6 +62,7 @@ export default function GalleryPage(appState: AppState) {
       setGalleryImages(prev => [{ title, image_url: imageUrl }, ...prev])
     } catch (err: any) {
       setUploadError("अपलोड विफल रहा: " + (err.message || err.error_description || "Unknown error"))
+      console.error('Gallery upload error:', err)
     } finally {
       setUploading(false)
     }
@@ -200,33 +207,6 @@ export default function GalleryPage(appState: AppState) {
                 </p>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Admin Upload Section */}
-        {appState.user?.role === "admin" && (
-          <div className="mb-8 p-6 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl shadow-lg flex flex-col sm:flex-row items-center gap-4">
-            <input
-              type="text"
-              placeholder="फोटो का शीर्षक"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              className="rounded-xl h-12 border-2 border-indigo-300 focus:border-indigo-500 px-4"
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="rounded-xl h-12 border-2 border-indigo-300 focus:border-indigo-500 px-4"
-            />
-            <button
-              onClick={handleUpload}
-              disabled={uploading}
-              className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-300"
-            >
-              {uploading ? "अपलोड हो रहा है..." : "फोटो अपलोड करें"}
-            </button>
-            {uploadError && <p className="text-red-600 mt-2">{uploadError}</p>}
           </div>
         )}
 
