@@ -1,12 +1,24 @@
 "use client"
 
+import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { UserPlus, Eye, EyeOff, ArrowLeft } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Phone,
+  User,
+  Hash,
+  Building,
+  MapPin,
+  CreditCard,
+  Banknote,
+  Shield,
+  Calendar,
+  FileText,
+  Heart,
+  CheckCircle,
+} from "lucide-react"
 import Navbar from "./navbar"
 import type { AppState } from "../app/page"
 import { registerUser } from "../lib/auth"
@@ -15,457 +27,485 @@ export default function RegisterPage(appState: AppState) {
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    password: "",
-    confirmPassword: "",
-    storeName: "",
-    location: "",
+    alternatePhone: "",
+    age: "",
     aadhar: "",
+    location: "",
+    storeName: "",
     gstNumber: "",
     drugLicenseNumber: "",
+    drugLicenseStartDate: "",
+    drugLicenseEndDate: "",
     foodLicenseNumber: "",
+    foodLicenseStartDate: "",
+    foodLicenseEndDate: "",
     accountNumber: "",
     ifsc: "",
     branch: "",
     nomineeName: "",
     nomineeRelation: "",
+    customNomineeRelation: "",
     nomineePhone: "",
     nomineeAccountNumber: "",
     nomineeIfsc: "",
     nomineeBranch: "",
+    password: "",
+    confirmPassword: "",
   })
-
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const validateForm = () => {
-    if (!formData.name.trim()) {
-      setError("नाम आवश्यक है")
-      return false
-    }
-    if (!formData.phone.trim()) {
-      setError("फोन नंबर आवश्यक है")
-      return false
-    }
-    if (formData.phone.length !== 10) {
-      setError("फोन नंबर 10 अंकों का होना चाहिए")
-      return false
-    }
-    if (!formData.password) {
-      setError("पासवर्ड आवश्यक है")
-      return false
-    }
-    if (formData.password.length < 6) {
-      setError("पासवर्ड कम से कम 6 अक्षर का होना चाहिए")
-      return false
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError("पासवर्ड मेल नहीं खाते")
-      return false
-    }
-    if (!formData.storeName.trim()) {
-      setError("स्टोर का नाम आवश्यक है")
-      return false
-    }
-    if (!formData.location.trim()) {
-      setError("स्थान आवश्यक है")
-      return false
-    }
-    return true
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setSuccess("")
 
-    if (!validateForm()) {
+    if (!formData.phone || formData.phone.length !== 10) {
+      setError("कृपया 10 अंकों का सही फ़ोन नंबर डालें")
       return
     }
-
-    setLoading(true)
-
+    if (!formData.password || formData.password.length < 6) {
+      setError("पासवर्ड कम से कम 6 अक्षर का होना चाहिए")
+      return
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError("पासवर्ड मेल नहीं खाते")
+      return
+    }
+    setIsLoading(true)
     try {
-      const result = await registerUser({
+      const userData = {
         name: formData.name,
         phone: formData.phone,
-        password: formData.password,
-        store_name: formData.storeName,
-        location: formData.location,
+        alternate_phone: formData.alternatePhone || undefined,
+        age: formData.age ? Number.parseInt(formData.age) : undefined,
         aadhar: formData.aadhar,
+        location: formData.location,
+        store_name: formData.storeName,
         gst_number: formData.gstNumber,
         drug_license_number: formData.drugLicenseNumber,
+        drug_license_start_date: formData.drugLicenseStartDate,
+        drug_license_end_date: formData.drugLicenseEndDate,
         food_license_number: formData.foodLicenseNumber,
+        food_license_start_date: formData.foodLicenseStartDate,
+        food_license_end_date: formData.foodLicenseEndDate,
         account_number: formData.accountNumber,
         ifsc: formData.ifsc,
         branch: formData.branch,
         nominee_name: formData.nomineeName,
-        nominee_relation: formData.nomineeRelation,
+        nominee_relation:
+          formData.nomineeRelation === "अन्य" ? formData.customNomineeRelation : formData.nomineeRelation,
         nominee_phone: formData.nomineePhone,
         nominee_account_number: formData.nomineeAccountNumber,
         nominee_ifsc: formData.nomineeIfsc,
         nominee_branch: formData.nomineeBranch,
-      })
-
-      if (result.success) {
-        setSuccess("रजिस्ट्रेशन सफल! कृपया प्रशासक से अनुमति लें।")
-        setFormData({
-          name: "",
-          phone: "",
-          password: "",
-          confirmPassword: "",
-          storeName: "",
-          location: "",
-          aadhar: "",
-          gstNumber: "",
-          drugLicenseNumber: "",
-          foodLicenseNumber: "",
-          accountNumber: "",
-          ifsc: "",
-          branch: "",
-          nomineeName: "",
-          nomineeRelation: "",
-          nomineePhone: "",
-          nomineeAccountNumber: "",
-          nomineeIfsc: "",
-          nomineeBranch: "",
-        })
+        password: formData.password,
+      }
+      const registerResult = await registerUser(userData)
+      if (registerResult.success && registerResult.user) {
+        appState.setUser(registerResult.user)
+        appState.setIsLoggedIn(true)
+        setSuccess("रजिस्ट्रेशन सफल! आपका आवेदन समीक्षाधीन है।")
       } else {
-        setError(result.message)
+        setError(registerResult.message)
       }
     } catch (error) {
-      console.error("Registration error:", error)
       setError("रजिस्ट्रेशन में त्रुटि हुई")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-100">
       <Navbar {...appState} />
-
       <div className="container-responsive py-4 sm:py-6 lg:py-8">
-        <Card className="max-w-4xl mx-auto shadow-2xl rounded-2xl sm:rounded-3xl border-0 bg-white">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-2xl sm:rounded-t-3xl">
-            <CardTitle className="text-xl sm:text-2xl font-bold text-center flex items-center justify-center gap-3">
-              <UserPlus className="h-6 w-6 sm:h-8 sm:w-8" />
-              नया सदस्य रजिस्ट्रेशन
+        <Card className="max-w-5xl mx-auto shadow-2xl rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-white via-blue-50 to-cyan-50">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-t-2xl sm:rounded-t-3xl p-4 sm:p-6">
+            <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-center flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+              <User className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span>नया सदस्य रजिस्ट्रेशन</span>
+              <Shield className="h-6 w-6 sm:h-8 sm:w-8" />
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6 text-gray-900">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error/Success Messages */}
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              {success && (
-                <Alert className="border-green-200 bg-green-50 text-green-800">
-                  <AlertDescription>{success}</AlertDescription>
-                </Alert>
-              )}
-
-              {/* Basic Information */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">नाम *</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="पूरा नाम"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">फोन नंबर *</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="10 अंकों का नंबर"
-                    maxLength={10}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Password Fields */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="password">पासवर्ड *</Label>
-                  <div className="relative">
+          <CardContent className="p-4 sm:p-6 lg:p-8">
+            <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-6">
+              {/* Personal Information */}
+              <div className="bg-gradient-to-r from-purple-100 to-blue-100 p-4 rounded-2xl">
+                <h3 className="text-lg font-bold text-purple-800 mb-4 flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  व्यक्तिगत जानकारी
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      नाम *
+                    </label>
                     <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      placeholder="कम से कम 6 अक्षर"
                       required
+                      placeholder="अपना पूरा नाम लिखें"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="confirmPassword">पासवर्ड की पुष्टि *</Label>
-                  <div className="relative">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      आयु *
+                    </label>
                     <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      placeholder="पासवर्ड दोबारा लिखें"
                       required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Store Information */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="storeName">स्टोर का नाम *</Label>
-                  <Input
-                    id="storeName"
-                    name="storeName"
-                    type="text"
-                    value={formData.storeName}
-                    onChange={handleInputChange}
-                    placeholder="मेडिकल स्टोर का नाम"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="location">स्थान *</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    type="text"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    placeholder="शहर/गांव"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* License Information */}
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="aadhar">आधार नंबर</Label>
-                  <Input
-                    id="aadhar"
-                    name="aadhar"
-                    type="text"
-                    value={formData.aadhar}
-                    onChange={handleInputChange}
-                    placeholder="12 अंकों का आधार"
-                    maxLength={12}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="gstNumber">GST नंबर</Label>
-                  <Input
-                    id="gstNumber"
-                    name="gstNumber"
-                    type="text"
-                    value={formData.gstNumber}
-                    onChange={handleInputChange}
-                    placeholder="GST नंबर"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="drugLicenseNumber">दवा लाइसेंस नंबर</Label>
-                  <Input
-                    id="drugLicenseNumber"
-                    name="drugLicenseNumber"
-                    type="text"
-                    value={formData.drugLicenseNumber}
-                    onChange={handleInputChange}
-                    placeholder="दवा लाइसेंस नंबर"
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="foodLicenseNumber">खाद्य लाइसेंस नंबर</Label>
-                  <Input
-                    id="foodLicenseNumber"
-                    name="foodLicenseNumber"
-                    type="text"
-                    value={formData.foodLicenseNumber}
-                    onChange={handleInputChange}
-                    placeholder="खाद्य लाइसेंस नंबर"
-                  />
-                </div>
-              </div>
-
-              {/* Bank Information */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">बैंक विवरण</h3>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="accountNumber">खाता नंबर</Label>
-                    <Input
-                      id="accountNumber"
-                      name="accountNumber"
-                      type="text"
-                      value={formData.accountNumber}
-                      onChange={handleInputChange}
-                      placeholder="खाता नंबर"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="ifsc">IFSC कोड</Label>
-                    <Input
-                      id="ifsc"
-                      name="ifsc"
-                      type="text"
-                      value={formData.ifsc}
-                      onChange={handleInputChange}
-                      placeholder="IFSC कोड"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="branch">शाखा</Label>
-                    <Input
-                      id="branch"
-                      name="branch"
-                      type="text"
-                      value={formData.branch}
-                      onChange={handleInputChange}
-                      placeholder="बैंक शाखा"
+                      type="number"
+                      placeholder="आपकी उम्र"
+                      value={formData.age}
+                      onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
                     />
                   </div>
                 </div>
-              </div>
-
-              {/* Nominee Information */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">नामांकित व्यक्ति का विवरण</h3>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="nomineeName">नामांकित का नाम</Label>
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      फ़ोन नंबर (व्हाट्सऐप नंबर) *
+                    </label>
                     <Input
-                      id="nomineeName"
-                      name="nomineeName"
-                      type="text"
-                      value={formData.nomineeName}
-                      onChange={handleInputChange}
-                      placeholder="नामांकित का नाम"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="nomineeRelation">संबंध</Label>
-                    <Input
-                      id="nomineeRelation"
-                      name="nomineeRelation"
-                      type="text"
-                      value={formData.nomineeRelation}
-                      onChange={handleInputChange}
-                      placeholder="संबंध (पिता, पुत्र, आदि)"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="nomineePhone">फोन नंबर</Label>
-                    <Input
-                      id="nomineePhone"
-                      name="nomineePhone"
+                      required
                       type="tel"
-                      value={formData.nomineePhone}
-                      onChange={handleInputChange}
-                      placeholder="नामांकित का फोन"
+                      placeholder="10 अंकों का मोबाइल नंबर"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
+                      maxLength={10}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      वैकल्पिक नंबर
+                    </label>
+                    <Input
+                      type="tel"
+                      placeholder="दूसरा मोबाइल नंबर (वैकल्पिक)"
+                      value={formData.alternatePhone}
+                      onChange={(e) => setFormData({ ...formData, alternatePhone: e.target.value })}
+                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
                       maxLength={10}
                     />
                   </div>
                 </div>
-                <div className="grid md:grid-cols-3 gap-4 mt-4">
-                  <div>
-                    <Label htmlFor="nomineeAccountNumber">खाता नंबर</Label>
+                <div className="space-y-2 mt-4">
+                  <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                    <Hash className="h-4 w-4" />
+                    आधार नंबर *
+                  </label>
+                  <Input
+                    required
+                    placeholder="1234-5678-9012"
+                    value={formData.aadhar}
+                    onChange={(e) => setFormData({ ...formData, aadhar: e.target.value })}
+                    className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
+                  />
+                </div>
+                {/* Password Fields */}
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      पासवर्ड *
+                    </label>
                     <Input
-                      id="nomineeAccountNumber"
-                      name="nomineeAccountNumber"
-                      type="text"
-                      value={formData.nomineeAccountNumber}
-                      onChange={handleInputChange}
-                      placeholder="नामांकित का खाता"
+                      required
+                      type="password"
+                      placeholder="पासवर्ड (कम से कम 6 अक्षर)"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="nomineeIfsc">IFSC कोड</Label>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      पासवर्ड की पुष्टि *
+                    </label>
                     <Input
-                      id="nomineeIfsc"
-                      name="nomineeIfsc"
-                      type="text"
-                      value={formData.nomineeIfsc}
-                      onChange={handleInputChange}
-                      placeholder="नामांकित का IFSC"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="nomineeBranch">शाखा</Label>
-                    <Input
-                      id="nomineeBranch"
-                      name="nomineeBranch"
-                      type="text"
-                      value={formData.nomineeBranch}
-                      onChange={handleInputChange}
-                      placeholder="नामांकित का बैंक"
+                      required
+                      type="password"
+                      placeholder="पासवर्ड दोबारा लिखें"
+                      value={formData.confirmPassword}
+                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
                     />
                   </div>
                 </div>
               </div>
-
+              {/* Business Information */}
+              <div className="bg-gradient-to-r from-green-100 to-teal-100 p-4 rounded-2xl">
+                <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center gap-2">
+                  <Building className="h-5 w-5" />
+                  व्यापार जानकारी
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      स्थान *
+                    </label>
+                    <Input
+                      required
+                      placeholder="शहर/गांव"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      स्टोर का नाम *
+                    </label>
+                    <Input
+                      required
+                      placeholder="मेडिकल स्टोर का नाम"
+                      value={formData.storeName}
+                      onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                      <Banknote className="h-4 w-4" />
+                      GST नंबर
+                    </label>
+                    <Input
+                      placeholder="GST नंबर"
+                      value={formData.gstNumber}
+                      onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value })}
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      दवा लाइसेंस नंबर
+                    </label>
+                    <Input
+                      placeholder="दवा लाइसेंस नंबर"
+                      value={formData.drugLicenseNumber}
+                      onChange={(e) => setFormData({ ...formData, drugLicenseNumber: e.target.value })}
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      दवा लाइसेंस शुरू करने का तिथि
+                    </label>
+                    <Input
+                      type="date"
+                      value={formData.drugLicenseStartDate}
+                      onChange={(e) => setFormData({ ...formData, drugLicenseStartDate: e.target.value })}
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      दवा लाइसेंस समाप्त करने का तिथि
+                    </label>
+                    <Input
+                      type="date"
+                      value={formData.drugLicenseEndDate}
+                      onChange={(e) => setFormData({ ...formData, drugLicenseEndDate: e.target.value })}
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      खाद्य लाइसेंस नंबर
+                    </label>
+                    <Input
+                      placeholder="खाद्य लाइसेंस नंबर"
+                      value={formData.foodLicenseNumber}
+                      onChange={(e) => setFormData({ ...formData, foodLicenseNumber: e.target.value })}
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      खाद्य लाइसेंस शुरू करने का तिथि
+                    </label>
+                    <Input
+                      type="date"
+                      value={formData.foodLicenseStartDate}
+                      onChange={(e) => setFormData({ ...formData, foodLicenseStartDate: e.target.value })}
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      खाद्य लाइसेंस समाप्त करने का तिथि
+                    </label>
+                    <Input
+                      type="date"
+                      value={formData.foodLicenseEndDate}
+                      onChange={(e) => setFormData({ ...formData, foodLicenseEndDate: e.target.value })}
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* Bank Information */}
+              <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-2xl">
+                <h3 className="text-lg font-bold text-yellow-800 mb-4 flex items-center gap-2">
+                  <Banknote className="h-5 w-5" />
+                  बैंक विवरण
+                </h3>
+                <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-yellow-800 flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      खाता नंबर
+                    </label>
+                    <Input
+                      placeholder="खाता नंबर"
+                      value={formData.accountNumber}
+                      onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                      className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-yellow-800 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      IFSC कोड
+                    </label>
+                    <Input
+                      placeholder="IFSC कोड"
+                      value={formData.ifsc}
+                      onChange={(e) => setFormData({ ...formData, ifsc: e.target.value })}
+                      className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-yellow-800 flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      शाखा
+                    </label>
+                    <Input
+                      placeholder="बैंक शाखा"
+                      value={formData.branch}
+                      onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                      className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* Nominee Information */}
+              <div className="bg-gradient-to-r from-pink-100 to-red-100 p-4 rounded-2xl">
+                <h3 className="text-lg font-bold text-pink-800 mb-4 flex items-center gap-2">
+                  <Heart className="h-5 w-5" />
+                  नामांकित व्यक्ति का विवरण
+                </h3>
+                <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      नामांकित का नाम
+                    </label>
+                    <Input
+                      placeholder="नामांकित का नाम"
+                      value={formData.nomineeName}
+                      onChange={(e) => setFormData({ ...formData, nomineeName: e.target.value })}
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      संबंध
+                    </label>
+                    <Input
+                      placeholder="संबंध (पिता, पुत्र, आदि)"
+                      value={formData.nomineeRelation}
+                      onChange={(e) => setFormData({ ...formData, nomineeRelation: e.target.value })}
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      फोन नंबर
+                    </label>
+                    <Input
+                      placeholder="नामांकित का फोन"
+                      value={formData.nomineePhone}
+                      onChange={(e) => setFormData({ ...formData, nomineePhone: e.target.value })}
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                      maxLength={10}
+                    />
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-3 gap-4 sm:gap-6 mt-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      खाता नंबर
+                    </label>
+                    <Input
+                      placeholder="नामांकित का खाता"
+                      value={formData.nomineeAccountNumber}
+                      onChange={(e) => setFormData({ ...formData, nomineeAccountNumber: e.target.value })}
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      IFSC कोड
+                    </label>
+                    <Input
+                      placeholder="नामांकित का IFSC"
+                      value={formData.nomineeIfsc}
+                      onChange={(e) => setFormData({ ...formData, nomineeIfsc: e.target.value })}
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      शाखा
+                    </label>
+                    <Input
+                      placeholder="नामांकित का बैंक"
+                      value={formData.nomineeBranch}
+                      onChange={(e) => setFormData({ ...formData, nomineeBranch: e.target.value })}
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                    />
+                  </div>
+                </div>
+              </div>
               {/* Submit Button */}
-              <div className="flex gap-4 pt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => appState.setCurrentPage("login")}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  लॉगिन पर जाएं
-                </Button>
+              <div className="flex justify-center">
                 <Button
                   type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  disabled={isLoading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-colors duration-300"
                 >
-                  {loading ? "रजिस्टर हो रहा है..." : "रजिस्टर करें"}
+                  {isLoading ? "रजिस्टर हो रहा है..." : "रजिस्टर करें"}
                 </Button>
               </div>
             </form>
