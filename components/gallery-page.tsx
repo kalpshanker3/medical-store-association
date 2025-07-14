@@ -12,6 +12,10 @@ export default function GalleryPage(appState: AppState) {
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState("सभी")
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState("")
+  const [file, setFile] = useState<File | null>(null)
+  const [title, setTitle] = useState("")
 
   const categories = [
     { name: "सभी", icon: Camera, color: "from-purple-500 to-pink-500" },
@@ -21,6 +25,41 @@ export default function GalleryPage(appState: AppState) {
     { name: "members", icon: Users, color: "from-green-500 to-teal-500" },
     { name: "health", icon: Heart, color: "from-indigo-500 to-purple-500" },
   ]
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0])
+    }
+  }
+
+  const handleUpload = async () => {
+    setUploading(true)
+    setUploadError("")
+    if (!file || !title) {
+      setUploadError("कृपया शीर्षक और फ़ाइल चुनें।")
+      setUploading(false)
+      return
+    }
+    try {
+      const filePath = `${Date.now()}_${file.name}`
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('gallery-images').upload(filePath, file)
+      if (uploadError) throw uploadError
+      const { data: urlData } = supabase.storage.from('gallery-images').getPublicUrl(filePath)
+      const imageUrl = urlData.publicUrl
+      const { error: dbError } = await supabase.from('gallery').insert([
+        { title, image_url: imageUrl }
+      ])
+      if (dbError) throw dbError
+      setFile(null)
+      setTitle("")
+      // Optionally, refresh gallery images
+      setGalleryImages(prev => [{ title, image_url: imageUrl }, ...prev])
+    } catch (err: any) {
+      setUploadError("अपलोड विफल रहा: " + (err.message || err.error_description || "Unknown error"))
+    } finally {
+      setUploading(false)
+    }
+  }
 
   // Fetch gallery images from database
   useEffect(() => {
@@ -161,6 +200,33 @@ export default function GalleryPage(appState: AppState) {
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Admin Upload Section */}
+        {appState.user?.role === "admin" && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl shadow-lg flex flex-col sm:flex-row items-center gap-4">
+            <input
+              type="text"
+              placeholder="फोटो का शीर्षक"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              className="rounded-xl h-12 border-2 border-indigo-300 focus:border-indigo-500 px-4"
+            />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="rounded-xl h-12 border-2 border-indigo-300 focus:border-indigo-500 px-4"
+            />
+            <button
+              onClick={handleUpload}
+              disabled={uploading}
+              className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-300"
+            >
+              {uploading ? "अपलोड हो रहा है..." : "फोटो अपलोड करें"}
+            </button>
+            {uploadError && <p className="text-red-600 mt-2">{uploadError}</p>}
           </div>
         )}
 

@@ -69,6 +69,20 @@ export default function HomePage(appState: AppState) {
     return () => clearInterval(refreshTimer)
   }, [])
 
+  // Fetch the user's membership status from the database on mount and update appState.user.membershipStatus accordingly. Display '✅ सक्रिय सदस्य' if active, otherwise '⏳ सदस्यता प्रतीक्षारत'.
+  useEffect(() => {
+    // Fetch latest user profile to get membership status
+    const fetchUserProfile = async () => {
+      if (appState.isLoggedIn && appState.user?.id) {
+        const { data, error } = await supabase.from('users').select('*').eq('id', appState.user.id).single()
+        if (data) {
+          appState.setUser({ ...appState.user, membershipStatus: data.membershipStatus })
+        }
+      }
+    }
+    fetchUserProfile()
+  }, [appState.isLoggedIn, appState.user?.id])
+
   // Remove any code that checks or displays database connection status, alerts, or debug info
 
 

@@ -7,12 +7,51 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, CreditCard, Building, Hash, CheckCircle } from "lucide-react"
 import Navbar from "./navbar"
 import type { AppState } from "../app/page"
+import { supabase } from "../lib/supabase"
 
 export default function MembershipPaymentPage(appState: AppState) {
   const [receiptUploaded, setReceiptUploaded] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState("")
+  const [file, setFile] = useState<File | null>(null)
 
-  const handleReceiptUpload = () => {
-    setReceiptUploaded(true)
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0])
+    }
+  }
+
+  const handleReceiptUpload = async () => {
+    setUploading(true)
+    setError("")
+    if (!file) {
+      setError("कृपया एक फ़ाइल चुनें।")
+      setUploading(false)
+      return
+    }
+    try {
+      // Upload to Supabase Storage
+      const filePath = `${appState.user.id}_${Date.now()}_${file.name}`
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('receipts').upload(filePath, file)
+      if (uploadError) throw uploadError
+      // Get public URL
+      const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(filePath)
+      const fileUrl = urlData.publicUrl
+      // Insert into membership_payments table
+      const { error: dbError } = await supabase.from('membership_payments').insert([
+        {
+          user_id: appState.user.id,
+          receipt_url: fileUrl,
+          status: 'pending',
+        }
+      ])
+      if (dbError) throw dbError
+      setReceiptUploaded(true)
+    } catch (err: any) {
+      setError("अपलोड विफल रहा: " + (err.message || err.error_description || "Unknown error"))
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -88,13 +127,16 @@ export default function MembershipPaymentPage(appState: AppState) {
                     type="file"
                     accept="image/*"
                     className="rounded-xl h-12 border-2 border-orange-300 focus:border-orange-500"
+                    onChange={handleFileChange}
                   />
                   <Button
                     onClick={handleReceiptUpload}
                     className="w-full h-12 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                    disabled={uploading}
                   >
-                    <Upload className="h-5 w-5 mr-2" />📤 रसीद अपलोड करें
+                    {uploading ? "अपलोड हो रहा है..." : (<><Upload className="h-5 w-5 mr-2" />📤 रसीद अपलोड करें</>)}
                   </Button>
+                  {error && <p className="text-red-600 mt-2">{error}</p>}
                 </div>
               ) : (
                 <div className="text-center p-4 bg-gradient-to-r from-green-200 to-emerald-200 rounded-xl">
