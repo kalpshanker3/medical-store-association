@@ -1,3 +1,4 @@
+"use client"
 import { useAuth } from "../layout"
 import MembershipPaymentPage from "@/components/membership-payment-page"
 

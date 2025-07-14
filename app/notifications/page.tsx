@@ -1,3 +1,4 @@
+"use client"
 import { useAuth } from "../layout"
 import NotificationsPage from "@/components/notifications-page"
 

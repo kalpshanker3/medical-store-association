@@ -1,3 +1,4 @@
+"use client"
 import { useAuth } from "../layout"
 import StatusPage from "@/components/status-page"
 

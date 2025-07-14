@@ -1,3 +1,4 @@
+"use client"
 import { useAuth } from "../layout"
 import GroupsPage from "@/components/groups-page"
 

@@ -1,3 +1,4 @@
+"use client"
 import { useAuth } from "../layout"
 import PaymentHistoryPage from "@/components/payment-history-page"
 

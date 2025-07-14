@@ -1,3 +1,4 @@
+"use client"
 import { useAuth } from "../layout"
 import LoginPage from "@/components/login-page"
 

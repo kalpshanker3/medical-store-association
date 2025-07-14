@@ -1,3 +1,4 @@
+"use client"
 import { useAuth } from "../layout"
 import AdminPage from "@/components/admin-page"
 

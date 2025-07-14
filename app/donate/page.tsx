@@ -1,3 +1,4 @@
+"use client"
 import { useAuth } from "../layout"
 import DonatePage from "@/components/donate-page"
 
