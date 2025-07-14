@@ -33,26 +33,35 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // Sync with Supabase session on mount
   useEffect(() => {
     const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession()
-      if (data?.session && data.session.user) {
-        // Fetch user profile from DB
-        const { data: userProfile, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', data.session.user.id)
-          .single()
-        if (userProfile) {
-          setUser(userProfile)
-          setIsLoggedIn(true)
-          localStorage.setItem('user', JSON.stringify(userProfile))
-          localStorage.setItem('isLoggedIn', 'true')
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        if (data?.session && data.session.user) {
+          // Fetch user profile from DB
+          const { data: userProfile, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', data.session.user.id)
+            .single()
+          if (userProfile) {
+            setUser(userProfile)
+            setIsLoggedIn(true)
+            localStorage.setItem('user', JSON.stringify(userProfile))
+            localStorage.setItem('isLoggedIn', 'true')
+          } else {
+            console.warn('Supabase session found but user profile missing, logging out.')
+            setUser(null)
+            setIsLoggedIn(false)
+            localStorage.removeItem('user')
+            localStorage.removeItem('isLoggedIn')
+          }
         } else {
           setUser(null)
           setIsLoggedIn(false)
           localStorage.removeItem('user')
           localStorage.removeItem('isLoggedIn')
         }
-      } else {
+      } catch (err) {
+        console.error('Error restoring session:', err)
         setUser(null)
         setIsLoggedIn(false)
         localStorage.removeItem('user')
@@ -63,24 +72,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     checkSession()
     // Listen for auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const { data: userProfile, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-        if (userProfile) {
-          setUser(userProfile)
-          setIsLoggedIn(true)
-          localStorage.setItem('user', JSON.stringify(userProfile))
-          localStorage.setItem('isLoggedIn', 'true')
+      try {
+        if (session?.user) {
+          const { data: userProfile, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+          if (userProfile) {
+            setUser(userProfile)
+            setIsLoggedIn(true)
+            localStorage.setItem('user', JSON.stringify(userProfile))
+            localStorage.setItem('isLoggedIn', 'true')
+          } else {
+            console.warn('Supabase session found but user profile missing, logging out.')
+            setUser(null)
+            setIsLoggedIn(false)
+            localStorage.removeItem('user')
+            localStorage.removeItem('isLoggedIn')
+          }
         } else {
           setUser(null)
           setIsLoggedIn(false)
           localStorage.removeItem('user')
           localStorage.removeItem('isLoggedIn')
         }
-      } else {
+      } catch (err) {
+        console.error('Error in auth state change:', err)
         setUser(null)
         setIsLoggedIn(false)
         localStorage.removeItem('user')
