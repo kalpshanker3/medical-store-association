@@ -18,6 +18,8 @@ import {
   FileText,
   Heart,
   CheckCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react"
 import Navbar from "./navbar"
 import type { AppState } from "../app/page"
@@ -55,6 +57,8 @@ export default function RegisterPage(appState: AppState) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -148,7 +152,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="अपना पूरा नाम लिखें"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -162,7 +166,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="आपकी उम्र"
                       value={formData.age}
                       onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                 </div>
@@ -178,7 +182,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="10 अंकों का मोबाइल नंबर"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                       maxLength={10}
                     />
                   </div>
@@ -192,7 +196,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="दूसरा मोबाइल नंबर (वैकल्पिक)"
                       value={formData.alternatePhone}
                       onChange={(e) => setFormData({ ...formData, alternatePhone: e.target.value })}
-                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                       maxLength={10}
                     />
                   </div>
@@ -207,7 +211,7 @@ export default function RegisterPage(appState: AppState) {
                     placeholder="1234-5678-9012"
                     value={formData.aadhar}
                     onChange={(e) => setFormData({ ...formData, aadhar: e.target.value })}
-                    className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
+                    className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                   />
                 </div>
                 {/* Password Fields */}
@@ -217,28 +221,48 @@ export default function RegisterPage(appState: AppState) {
                       <Shield className="h-4 w-4" />
                       पासवर्ड *
                     </label>
-                    <Input
-                      required
-                      type="password"
-                      placeholder="पासवर्ड (कम से कम 6 अक्षर)"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
-                    />
+                    <div className="relative">
+                      <Input
+                        required
+                        type={showPassword ? "text" : "password"}
+                        placeholder="पासवर्ड (कम से कम 6 अक्षर)"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black pr-12"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-700"
+                        tabIndex={-1}
+                        onClick={() => setShowPassword((v) => !v)}
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
                       <Shield className="h-4 w-4" />
                       पासवर्ड की पुष्टि *
                     </label>
-                    <Input
-                      required
-                      type="password"
-                      placeholder="पासवर्ड दोबारा लिखें"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg"
-                    />
+                    <div className="relative">
+                      <Input
+                        required
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="पासवर्ड दोबारा लिखें"
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black pr-12"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-700"
+                        tabIndex={-1}
+                        onClick={() => setShowConfirmPassword((v) => !v)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -259,7 +283,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="शहर/गांव"
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -272,7 +296,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="मेडिकल स्टोर का नाम"
                       value={formData.storeName}
                       onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
-                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                 </div>
@@ -286,7 +310,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="GST नंबर"
                       value={formData.gstNumber}
                       onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value })}
-                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -298,7 +322,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="दवा लाइसेंस नंबर"
                       value={formData.drugLicenseNumber}
                       onChange={(e) => setFormData({ ...formData, drugLicenseNumber: e.target.value })}
-                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                 </div>
@@ -312,7 +336,7 @@ export default function RegisterPage(appState: AppState) {
                       type="date"
                       value={formData.drugLicenseStartDate}
                       onChange={(e) => setFormData({ ...formData, drugLicenseStartDate: e.target.value })}
-                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -324,7 +348,7 @@ export default function RegisterPage(appState: AppState) {
                       type="date"
                       value={formData.drugLicenseEndDate}
                       onChange={(e) => setFormData({ ...formData, drugLicenseEndDate: e.target.value })}
-                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                 </div>
@@ -338,7 +362,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="खाद्य लाइसेंस नंबर"
                       value={formData.foodLicenseNumber}
                       onChange={(e) => setFormData({ ...formData, foodLicenseNumber: e.target.value })}
-                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                 </div>
@@ -352,7 +376,7 @@ export default function RegisterPage(appState: AppState) {
                       type="date"
                       value={formData.foodLicenseStartDate}
                       onChange={(e) => setFormData({ ...formData, foodLicenseStartDate: e.target.value })}
-                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -364,7 +388,7 @@ export default function RegisterPage(appState: AppState) {
                       type="date"
                       value={formData.foodLicenseEndDate}
                       onChange={(e) => setFormData({ ...formData, foodLicenseEndDate: e.target.value })}
-                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                 </div>
@@ -385,7 +409,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="खाता नंबर"
                       value={formData.accountNumber}
                       onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                      className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -397,7 +421,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="IFSC कोड"
                       value={formData.ifsc}
                       onChange={(e) => setFormData({ ...formData, ifsc: e.target.value })}
-                      className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -409,7 +433,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="बैंक शाखा"
                       value={formData.branch}
                       onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                      className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                 </div>
@@ -430,7 +454,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="नामांकित का नाम"
                       value={formData.nomineeName}
                       onChange={(e) => setFormData({ ...formData, nomineeName: e.target.value })}
-                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -442,7 +466,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="संबंध (पिता, पुत्र, आदि)"
                       value={formData.nomineeRelation}
                       onChange={(e) => setFormData({ ...formData, nomineeRelation: e.target.value })}
-                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -454,7 +478,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="नामांकित का फोन"
                       value={formData.nomineePhone}
                       onChange={(e) => setFormData({ ...formData, nomineePhone: e.target.value })}
-                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                       maxLength={10}
                     />
                   </div>
@@ -469,7 +493,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="नामांकित का खाता"
                       value={formData.nomineeAccountNumber}
                       onChange={(e) => setFormData({ ...formData, nomineeAccountNumber: e.target.value })}
-                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -481,7 +505,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="नामांकित का IFSC"
                       value={formData.nomineeIfsc}
                       onChange={(e) => setFormData({ ...formData, nomineeIfsc: e.target.value })}
-                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                   <div className="space-y-2">
@@ -493,7 +517,7 @@ export default function RegisterPage(appState: AppState) {
                       placeholder="नामांकित का बैंक"
                       value={formData.nomineeBranch}
                       onChange={(e) => setFormData({ ...formData, nomineeBranch: e.target.value })}
-                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg"
+                      className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black"
                     />
                   </div>
                 </div>

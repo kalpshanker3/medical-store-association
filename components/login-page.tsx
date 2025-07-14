@@ -5,7 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Phone, Shield, CheckCircle } from "lucide-react"
+import { User, Phone, Shield, CheckCircle, Eye, EyeOff } from "lucide-react"
 import Navbar from "./navbar"
 import type { AppState } from "../app/page"
 import { loginUser } from "../lib/auth"
@@ -75,7 +75,7 @@ export default function LoginPage(appState: AppState) {
                   placeholder="10 अंकों का मोबाइल नंबर"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 h-14 text-lg backdrop-blur-sm bg-white/80 font-medium"
+                  className="rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 h-14 text-lg backdrop-blur-sm bg-white/80 font-medium text-black"
                   required
                   maxLength={10}
                 />
@@ -85,23 +85,25 @@ export default function LoginPage(appState: AppState) {
                   <Shield className="h-5 w-5 text-indigo-600" />
                   पासवर्ड
                 </label>
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="अपना पासवर्ड लिखें"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 h-14 text-lg backdrop-blur-sm bg-white/80 font-medium"
-                  required
-                  minLength={6}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="text-indigo-600 text-xs px-2 py-1"
-                  onClick={() => setShowPassword((v) => !v)}
-                >
-                  {showPassword ? "पासवर्ड छुपाएं" : "पासवर्ड दिखाएं"}
-                </Button>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="अपना पासवर्ड लिखें"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 h-14 text-lg backdrop-blur-sm bg-white/80 font-medium text-black pr-12"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-700"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword((v) => !v)}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
               <Button
                 type="submit"
