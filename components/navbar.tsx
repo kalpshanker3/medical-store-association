@@ -40,31 +40,28 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user, setUser, logou
           {/* Desktop Navigation */}
           {isLoggedIn ? (
             <div className="hidden md:flex items-center space-x-3">
-              <Button
+              <Link href="/"><Button
                 variant="ghost"
                 className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
-                onClick={() => {}}
               >
                 <Home className="h-5 w-5 mr-2" />
                 होम
-              </Button>
-              <Button
+              </Button></Link>
+              <Link href="/groups"><Button
                 variant="ghost"
                 className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
-                onClick={() => {}}
               >
                 <Users className="h-5 w-5 mr-2" />
                 ग्रुप्स
-              </Button>
-              <Button
+              </Button></Link>
+              <Link href="/notifications"><Button
                 variant="ghost"
                 className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2 relative"
-                onClick={() => {}}
               >
                 <Bell className="h-5 w-5 mr-2" />
                 नोटिफिकेशन
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-400 to-pink-500 rounded-full animate-pulse shadow-lg"></span>
-              </Button>
+              </Button></Link>
               <Button
                 variant="ghost"
                 className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
@@ -81,18 +78,16 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user, setUser, logou
             </div>
           ) : (
             <div className="hidden md:flex space-x-3">
-              <Button
+              <Link href="/register"><Button
                 className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95 transition-all duration-300 btn-mobile border border-white/20 backdrop-blur-sm"
-                onClick={() => {}}
               >
                 रजिस्टर करें
-              </Button>
-              <Button
+              </Button></Link>
+              <Link href="/login"><Button
                 className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95 transition-all duration-300 btn-mobile border border-white/20 backdrop-blur-sm"
-                onClick={() => {}}
               >
                 लॉग इन करें
-              </Button>
+              </Button></Link>
             </div>
           )}
 
@@ -115,31 +110,28 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user, setUser, logou
 
               {isLoggedIn ? (
                 <>
-                  <Button
+                  <Link href="/"><Button
                     variant="ghost"
                     className="text-white/90 hover:text-white hover:bg-white/10 justify-start rounded-2xl btn-mobile backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 py-4"
-                    onClick={() => {}}
                   >
                     <Home className="h-5 w-5 mr-3" />
                     होम
-                  </Button>
-                  <Button
+                  </Button></Link>
+                  <Link href="/groups"><Button
                     variant="ghost"
                     className="text-white/90 hover:text-white hover:bg-white/10 justify-start rounded-2xl btn-mobile backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 py-4"
-                    onClick={() => {}}
                   >
                     <Users className="h-5 w-5 mr-3" />
                     ग्रुप्स
-                  </Button>
-                  <Button
+                  </Button></Link>
+                  <Link href="/notifications"><Button
                     variant="ghost"
                     className="text-white/90 hover:text-white hover:bg-white/10 justify-start rounded-2xl btn-mobile backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 py-4 relative"
-                    onClick={() => {}}
                   >
                     <Bell className="h-5 w-5 mr-3" />
                     नोटिफिकेशन
                     <span className="absolute left-8 top-3 w-2 h-2 bg-gradient-to-r from-red-400 to-pink-500 rounded-full animate-pulse"></span>
-                  </Button>
+                  </Button></Link>
                   <Button
                     variant="ghost"
                     className="text-white/90 hover:text-white hover:bg-white/10 justify-start rounded-2xl btn-mobile backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 py-4"
@@ -150,18 +142,16 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user, setUser, logou
                 </>
               ) : (
                 <>
-                  <Button
+                  <Link href="/register"><Button
                     className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white font-semibold rounded-2xl shadow-xl btn-mobile border border-white/20 backdrop-blur-sm py-4"
-                    onClick={() => {}}
                   >
                     रजिस्टर करें
-                  </Button>
-                  <Button
+                  </Button></Link>
+                  <Link href="/login"><Button
                     className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white font-semibold rounded-2xl shadow-xl btn-mobile border border-white/20 backdrop-blur-sm py-4"
-                    onClick={() => {}}
                   >
                     लॉग इन करें
-                  </Button>
+                  </Button></Link>
                 </>
               )}
             </div>

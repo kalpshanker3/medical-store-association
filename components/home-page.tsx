@@ -101,11 +101,6 @@ export default function HomePage(appState: AppState) {
                   <span className="font-semibold text-center sm:text-left">सहयोग • भाईचारा • एकजुटता</span>
                 </div>
                 
-                {/* Connection Status */}
-                <div className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-blue-100">
-                  <ConnectionStatus />
-                </div>
-                
 
               </div>
               <div className="relative h-72 sm:h-96 rounded-3xl sm:rounded-[2rem] overflow-hidden shadow-2xl group order-1 lg:order-2 border-4 border-white/50">
