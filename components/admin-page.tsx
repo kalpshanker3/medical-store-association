@@ -25,65 +25,8 @@ import {
 import { Input } from "@/components/ui/input"
 import Navbar from "./navbar"
 import type { AppState } from "../app/page"
-
-interface GalleryImage {
-  id: number
-  src: string
-  title: string
-  category: string
-  uploadDate: string
-}
-
-interface MembershipRequest {
-  id: number
-  name: string
-  phone: string
-  status: string
-  amount: number
-  receiptImage: string
-  uploadDate: string
-}
-
-interface DonationReceipt {
-  id: number
-  donor: string
-  amount: number
-  recipient: string
-  status: string
-  receiptImage: string
-  uploadDate: string
-}
-
-interface RegistrationForm {
-  id: number
-  name: string
-  storeName: string
-  location: string
-  status: string
-  phone: string
-  aadhar: string
-  gstNumber: string
-  drugLicenseNumber: string
-  foodLicenseNumber: string
-  accountNumber: string
-  ifsc: string
-  branch: string
-  nomineeName: string
-  nomineeRelation: string
-  nomineePhone: string
-  nomineeAccountNumber: string
-  nomineeIfsc: string
-  nomineeBranch: string
-}
-
-interface Member {
-  id: number
-  name: string
-  phone: string
-  storeName: string
-  location: string
-  status: "active" | "inactive"
-}
+import { supabase } from "../lib/supabase"
+import type { User, MembershipPayment, Donation, GalleryImage, Notification } from "../lib/supabase"
 
 export default function AdminPage(appState: AppState) {
   useEffect(() => {
@@ -92,61 +35,326 @@ export default function AdminPage(appState: AppState) {
     }
   }, [appState.isLoggedIn, appState.user])
 
-  const [membershipRequests] = useState<MembershipRequest[]>([])
+  // Real data states
+  const [membershipPayments, setMembershipPayments] = useState<MembershipPayment[]>([])
+  const [donations, setDonations] = useState<Donation[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  
+  // Loading states
+  const [loading, setLoading] = useState({
+    membership: true,
+    donations: true,
+    users: true,
+    gallery: true,
+    notifications: true
+  })
 
-  const [donationReceipts] = useState<DonationReceipt[]>([])
-
-  const [registrationForms] = useState<RegistrationForm[]>([])
-
-  const [allMembers] = useState<Member[]>([])
-
+  // Form states
   const [selectedMember, setSelectedMember] = useState("")
   const [accidentType, setAccidentType] = useState("")
   const [selectedReceiptImage, setSelectedReceiptImage] = useState<string | null>(null)
-  const [selectedMemberDetails, setSelectedMemberDetails] = useState<RegistrationForm | null>(null)
+  const [selectedMemberDetails, setSelectedMemberDetails] = useState<User | null>(null)
   const [customAccidentType, setCustomAccidentType] = useState("")
-
-  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([])
-
   const [newImageTitle, setNewImageTitle] = useState("")
   const [newImageCategory, setNewImageCategory] = useState("events")
+  const [newNotificationTitle, setNewNotificationTitle] = useState("")
+  const [newNotificationMessage, setNewNotificationMessage] = useState("")
+  const [newNotificationType, setNewNotificationType] = useState<"info" | "warning" | "success" | "emergency">("info")
 
-  const handleApprove = (type: string, id: number) => {
-    console.log(`Approved ${type} with ID: ${id}`)
-  }
+  // Fetch all data on component mount
+  useEffect(() => {
+    if (appState.user?.role === "admin") {
+      fetchAllData()
+    }
+  }, [appState.user])
 
-  const handleReject = (type: string, id: number) => {
-    console.log(`Rejected ${type} with ID: ${id}`)
-  }
+  const fetchAllData = async () => {
+    try {
+      console.log("🔄 Fetching admin data...")
+      
+      // Fetch membership payments
+      const { data: payments, error: paymentsError } = await supabase
+        .from('membership_payments')
+        .select(`
+          *,
+          users (
+            id,
+            name,
+            phone,
+            store_name,
+            location
+          )
+        `)
+        .order('created_at', { ascending: false })
 
-  const handleAddImage = () => {
-    if (newImageTitle.trim()) {
-      const newImage: GalleryImage = {
-        id: Date.now(),
-        src: `/placeholder.svg?height=300&width=400&text=${encodeURIComponent(newImageTitle)}`,
-        title: newImageTitle,
-        category: newImageCategory,
-        uploadDate: new Date().toISOString().split("T")[0],
+      if (paymentsError) {
+        console.error("❌ Error fetching payments:", paymentsError)
+      } else {
+        console.log("✅ Payments fetched:", payments?.length || 0)
+        setMembershipPayments(payments || [])
       }
-      setGalleryImages([newImage, ...galleryImages])
-      setNewImageTitle("")
-      setNewImageCategory("events")
+      setLoading(prev => ({ ...prev, membership: false }))
+
+      // Fetch donations
+      const { data: donationsData, error: donationsError } = await supabase
+        .from('donations')
+        .select(`
+          *,
+          users (
+            id,
+            name,
+            phone,
+            store_name,
+            location
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (donationsError) {
+        console.error("❌ Error fetching donations:", donationsError)
+      } else {
+        console.log("✅ Donations fetched:", donationsData?.length || 0)
+        setDonations(donationsData || [])
+      }
+      setLoading(prev => ({ ...prev, donations: false }))
+
+      // Fetch users
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (usersError) {
+        console.error("❌ Error fetching users:", usersError)
+      } else {
+        console.log("✅ Users fetched:", usersData?.length || 0)
+        setUsers(usersData || [])
+      }
+      setLoading(prev => ({ ...prev, users: false }))
+
+      // Fetch gallery images
+      const { data: galleryData, error: galleryError } = await supabase
+        .from('gallery')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (galleryError) {
+        console.error("❌ Error fetching gallery:", galleryError)
+      } else {
+        console.log("✅ Gallery fetched:", galleryData?.length || 0)
+        setGalleryImages(galleryData || [])
+      }
+      setLoading(prev => ({ ...prev, gallery: false }))
+
+      // Fetch notifications
+      const { data: notificationsData, error: notificationsError } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (notificationsError) {
+        console.error("❌ Error fetching notifications:", notificationsError)
+      } else {
+        console.log("✅ Notifications fetched:", notificationsData?.length || 0)
+        setNotifications(notificationsData || [])
+      }
+      setLoading(prev => ({ ...prev, notifications: false }))
+
+    } catch (error) {
+      console.error("❌ Error in fetchAllData:", error)
     }
   }
 
-  const handleDeleteImage = (id: number) => {
-    setGalleryImages(galleryImages.filter((img) => img.id !== id))
+  const handleApprove = async (type: string, id: string) => {
+    try {
+      console.log(`Approving ${type} with ID: ${id}`)
+      
+      if (type === 'membership') {
+        const { error } = await supabase
+          .from('membership_payments')
+          .update({ 
+            status: 'approved',
+            approved_by: appState.user?.id,
+            approved_at: new Date().toISOString()
+          })
+          .eq('id', id)
+
+        if (error) {
+          console.error("❌ Error approving payment:", error)
+          alert("Approval failed")
+        } else {
+          console.log("✅ Payment approved")
+          fetchAllData() // Refresh data
+        }
+      } else if (type === 'donation') {
+        const { error } = await supabase
+          .from('donations')
+          .update({ 
+            status: 'approved',
+            approved_by: appState.user?.id,
+            approved_at: new Date().toISOString()
+          })
+          .eq('id', id)
+
+        if (error) {
+          console.error("❌ Error approving donation:", error)
+          alert("Approval failed")
+        } else {
+          console.log("✅ Donation approved")
+          fetchAllData() // Refresh data
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error in handleApprove:", error)
+    }
   }
 
-  const handleAddAccident = () => {
+  const handleReject = async (type: string, id: string) => {
+    try {
+      console.log(`Rejecting ${type} with ID: ${id}`)
+      
+      if (type === 'membership') {
+        const { error } = await supabase
+          .from('membership_payments')
+          .update({ status: 'rejected' })
+          .eq('id', id)
+
+        if (error) {
+          console.error("❌ Error rejecting payment:", error)
+          alert("Rejection failed")
+        } else {
+          console.log("✅ Payment rejected")
+          fetchAllData() // Refresh data
+        }
+      } else if (type === 'donation') {
+        const { error } = await supabase
+          .from('donations')
+          .update({ status: 'rejected' })
+          .eq('id', id)
+
+        if (error) {
+          console.error("❌ Error rejecting donation:", error)
+          alert("Rejection failed")
+        } else {
+          console.log("✅ Donation rejected")
+          fetchAllData() // Refresh data
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error in handleReject:", error)
+    }
+  }
+
+  const handleAddImage = async () => {
+    if (newImageTitle.trim()) {
+      try {
+        const { data, error } = await supabase
+          .from('gallery')
+          .insert({
+            title: newImageTitle,
+            image_url: `/placeholder.svg?height=300&width=400&text=${encodeURIComponent(newImageTitle)}`,
+            category: newImageCategory,
+            uploaded_by: appState.user?.id
+          })
+          .select()
+          .single()
+
+        if (error) {
+          console.error("❌ Error adding image:", error)
+          alert("Image addition failed")
+        } else {
+          console.log("✅ Image added:", data)
+          setNewImageTitle("")
+          setNewImageCategory("events")
+          fetchAllData() // Refresh data
+        }
+      } catch (error) {
+        console.error("❌ Error in handleAddImage:", error)
+      }
+    }
+  }
+
+  const handleDeleteImage = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('gallery')
+        .delete()
+        .eq('id', id)
+
+      if (error) {
+        console.error("❌ Error deleting image:", error)
+        alert("Image deletion failed")
+      } else {
+        console.log("✅ Image deleted")
+        fetchAllData() // Refresh data
+      }
+    } catch (error) {
+      console.error("❌ Error in handleDeleteImage:", error)
+    }
+  }
+
+  const handleAddNotification = async () => {
+    if (newNotificationTitle.trim() && newNotificationMessage.trim()) {
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .insert({
+            title: newNotificationTitle,
+            message: newNotificationMessage,
+            type: newNotificationType,
+            created_by: appState.user?.id
+          })
+          .select()
+          .single()
+
+        if (error) {
+          console.error("❌ Error adding notification:", error)
+          alert("Notification addition failed")
+        } else {
+          console.log("✅ Notification added:", data)
+          setNewNotificationTitle("")
+          setNewNotificationMessage("")
+          setNewNotificationType("info")
+          fetchAllData() // Refresh data
+        }
+      } catch (error) {
+        console.error("❌ Error in handleAddNotification:", error)
+      }
+    }
+  }
+
+  const handleAddAccident = async () => {
     const finalAccidentType = accidentType === "अन्य" ? customAccidentType : accidentType
 
     if (selectedMember && finalAccidentType) {
-      console.log(`Added accident for member: ${selectedMember}, type: ${finalAccidentType}`)
-      setSelectedMember("")
-      setAccidentType("")
-      setCustomAccidentType("")
-      alert("दुर्घटना की जानकारी सफलतापूर्वक जोड़ी गई!")
+      try {
+        const { data, error } = await supabase
+          .from('accidents')
+          .insert({
+            member_id: selectedMember,
+            accident_type: finalAccidentType,
+            status: 'active',
+            created_by: appState.user?.id
+          })
+          .select()
+          .single()
+
+        if (error) {
+          console.error("❌ Error adding accident:", error)
+          alert("Accident addition failed")
+        } else {
+          console.log("✅ Accident added:", data)
+          setSelectedMember("")
+          setAccidentType("")
+          setCustomAccidentType("")
+          alert("दुर्घटना की जानकारी सफलतापूर्वक जोड़ी गई!")
+          fetchAllData() // Refresh data
+        }
+      } catch (error) {
+        console.error("❌ Error in handleAddAccident:", error)
+      }
     } else {
       alert("कृपया सदस्य और दुर्घटना का प्रकार चुनें")
     }
@@ -199,530 +407,485 @@ export default function AdminPage(appState: AppState) {
                   <AlertTriangle className="h-4 w-4" />
                   दुर्घटना
                 </TabsTrigger>
-                <TabsTrigger value="notifications" className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  सूचनाएं
-                </TabsTrigger>
                 <TabsTrigger value="gallery" className="flex items-center gap-2">
                   <Camera className="h-4 w-4" />
                   गैलरी
                 </TabsTrigger>
+                <TabsTrigger value="notifications" className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  सूचनाएं
+                </TabsTrigger>
               </TabsList>
 
-              {/* Membership Approvals */}
+              {/* Membership Payments Tab */}
               <TabsContent value="membership">
-                <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-0 rounded-2xl">
+                <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-0 rounded-2xl shadow-lg">
                   <CardHeader>
-                    <CardTitle className="text-green-800 flex items-center gap-2">
-                      <CreditCard className="h-5 w-5" />
-                      सदस्यता भुगतान अनुमोदन
+                    <CardTitle className="flex items-center gap-2 text-blue-800">
+                      <CreditCard className="h-6 w-6" />
+                      सदस्यता भुगतान अनुरोध
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {membershipRequests.map((request) => (
-                        <div key={request.id} className="bg-white p-6 rounded-xl shadow-lg">
-                          <div className="grid md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <div>
-                                <h4 className="font-bold text-gray-800 text-xl">{request.name}</h4>
-                                <p className="text-gray-600">📞 {request.phone}</p>
-                                <p className="text-green-600 font-semibold text-lg">राशि: ₹{request.amount}</p>
-                                <p className="text-gray-500 text-sm">अपलोड: {request.uploadDate}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge className="bg-yellow-100 text-yellow-800">प्रतीक्षारत</Badge>
-                                <Button
-                                  size="sm"
-                                  className="bg-green-500 hover:bg-green-600"
-                                  onClick={() => handleApprove("membership", request.id)}
-                                >
-                                  <CheckCircle className="h-4 w-4 mr-1" />
-                                  स्वीकार
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleReject("membership", request.id)}
-                                >
-                                  <X className="h-4 w-4 mr-1" />
-                                  अस्वीकार
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="space-y-4">
-                              <div className="bg-gray-50 p-4 rounded-lg">
-                                <h5 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                                  <Camera className="h-4 w-4" />
-                                  भुगतान रसीद:
-                                </h5>
-                                <img
-                                  src={request.receiptImage || "/placeholder.svg"}
-                                  alt="Payment Receipt"
-                                  className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                                  onClick={() => setSelectedReceiptImage(request.receiptImage)}
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="w-full mt-2 bg-transparent"
-                                  onClick={() => setSelectedReceiptImage(request.receiptImage)}
-                                >
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  बड़ा देखें
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Donation Approvals */}
-              <TabsContent value="donations">
-                <Card className="bg-gradient-to-br from-red-50 to-pink-50 border-0 rounded-2xl">
-                  <CardHeader>
-                    <CardTitle className="text-red-800 flex items-center gap-2">
-                      <Heart className="h-5 w-5" />
-                      दान रसीद अनुमोदन
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {donationReceipts.map((receipt) => (
-                        <div key={receipt.id} className="bg-white p-6 rounded-xl shadow-lg">
-                          <div className="grid md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <div>
-                                <h4 className="font-bold text-gray-800 text-xl">दानकर्ता: {receipt.donor}</h4>
-                                <p className="text-gray-600">प्राप्तकर्ता: {receipt.recipient}</p>
-                                <p className="text-red-600 font-semibold text-lg">राशि: ₹{receipt.amount}</p>
-                                <p className="text-gray-500 text-sm">अपलोड: {receipt.uploadDate}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge className="bg-yellow-100 text-yellow-800">प्रतीक्षारत</Badge>
-                                <Button
-                                  size="sm"
-                                  className="bg-green-500 hover:bg-green-600"
-                                  onClick={() => handleApprove("donation", receipt.id)}
-                                >
-                                  <CheckCircle className="h-4 w-4 mr-1" />
-                                  स्वीकार
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleReject("donation", receipt.id)}
-                                >
-                                  <X className="h-4 w-4 mr-1" />
-                                  अस्वीकार
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="space-y-4">
-                              <div className="bg-gray-50 p-4 rounded-lg">
-                                <h5 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                                  <Camera className="h-4 w-4" />
-                                  दान रसीद:
-                                </h5>
-                                <img
-                                  src={receipt.receiptImage || "/placeholder.svg"}
-                                  alt="Donation Receipt"
-                                  className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                                  onClick={() => setSelectedReceiptImage(receipt.receiptImage)}
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="w-full mt-2 bg-transparent"
-                                  onClick={() => setSelectedReceiptImage(receipt.receiptImage)}
-                                >
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  बड़ा देखें
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Registration Approvals */}
-              <TabsContent value="registrations">
-                <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-0 rounded-2xl">
-                  <CardHeader>
-                    <CardTitle className="text-blue-800 flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      सदस्य रजिस्ट्रेशन अनुमोदन
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {registrationForms.map((form) => (
-                        <div key={form.id} className="bg-white p-6 rounded-xl shadow-lg">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                            <div className="flex-1">
-                              <h4 className="font-bold text-gray-800 text-xl">{form.name}</h4>
-                              <p className="text-gray-600">🏪 {form.storeName}</p>
-                              <p className="text-gray-600">📍 {form.location}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge className="bg-yellow-100 text-yellow-800">प्रतीक्षारत</Badge>
-                              <Button size="sm" variant="outline" onClick={() => setSelectedMemberDetails(form)}>
-                                <Eye className="h-4 w-4 mr-1" />
-                                विवरण देखें
-                              </Button>
-                              <Button
-                                size="sm"
-                                className="bg-green-500 hover:bg-green-600"
-                                onClick={() => handleApprove("registration", form.id)}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                स्वीकार
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleReject("registration", form.id)}
-                              >
-                                <X className="h-4 w-4 mr-1" />
-                                अस्वीकार
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Emergency Updates */}
-              <TabsContent value="emergency">
-                <Card className="bg-gradient-to-br from-orange-50 to-yellow-50 border-0 rounded-2xl">
-                  <CardHeader>
-                    <CardTitle className="text-orange-800 flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5" />
-                      दुर्घटना अपडेट
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="bg-white p-6 rounded-xl shadow-lg">
-                        <h4 className="font-bold text-gray-800 mb-4 text-xl">नई दुर्घटना की जानकारी जोड़ें</h4>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-sm font-bold text-orange-800 mb-2">दुर्घटनाग्रस्त सदस्य चुनें *</label>
-                            <select
-                              value={selectedMember}
-                              onChange={(e) => setSelectedMember(e.target.value)}
-                              className="w-full p-3 border-2 border-orange-200 rounded-xl focus:border-orange-500 text-lg"
-                            >
-                              <option value="">सदस्य चुनें</option>
-                              {allMembers.map((member) => (
-                                <option key={member.id} value={member.name}>
-                                  {member.name} - {member.storeName} ({member.location})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-bold text-orange-800 mb-2">दुर्घटना का प्रकार *</label>
-                            <select
-                              value={accidentType}
-                              onChange={(e) => {
-                                setAccidentType(e.target.value)
-                                if (e.target.value !== "अन्य") {
-                                  setCustomAccidentType("")
-                                }
-                              }}
-                              className="w-full p-3 border-2 border-orange-200 rounded-xl focus:border-orange-500 text-lg"
-                            >
-                              <option value="">दुर्घटना का प्रकार चुनें</option>
-                              <option value="हृदयाघात">हृदयाघात</option>
-                              <option value="कैंसर">कैंसर</option>
-                              <option value="दुर्घटना">दुर्घटना</option>
-                              <option value="बीमारी">गंभीर बीमारी</option>
-                              <option value="अन्य">अन्य</option>
-                            </select>
-
-                            {accidentType === "अन्य" && (
-                              <input
-                                type="text"
-                                placeholder="कृपया दुर्घटना का प्रकार लिखें"
-                                value={customAccidentType}
-                                onChange={(e) => setCustomAccidentType(e.target.value)}
-                                className="w-full p-3 border-2 border-orange-200 rounded-xl focus:border-orange-500 text-lg mt-2"
-                                required
-                              />
-                            )}
-                          </div>
-                          <Button
-                            onClick={handleAddAccident}
-                            className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl font-bold h-14 text-lg"
-                          >
-                            <FileText className="h-5 w-5 mr-2" />
-                            दुर्घटना जानकारी जोड़ें
-                          </Button>
-                        </div>
+                    {loading.membership ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">डेटा लोड हो रहा है...</p>
                       </div>
-
-                      {/* Current Members List */}
-                      <div className="bg-white p-6 rounded-xl shadow-lg">
-                        <h4 className="font-bold text-gray-800 mb-4 text-xl">सभी सदस्यों की सूची</h4>
-                        <div className="grid md:grid-cols-2 gap-4 max-h-64 overflow-y-auto">
-                          {allMembers.map((member) => (
-                            <div
-                              key={member.id}
-                              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                              <h5 className="font-semibold text-gray-800">{member.name}</h5>
-                              <p className="text-sm text-gray-600">📞 {member.phone}</p>
-                              <p className="text-sm text-gray-600">🏪 {member.storeName}</p>
-                              <p className="text-sm text-gray-600">📍 {member.location}</p>
-                              <Badge
-                                className={`mt-2 ${
-                                  member.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {member.status === "active" ? "सक्रिय" : "निष्क्रिय"}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
+                    ) : membershipPayments.length === 0 ? (
+                      <div className="text-center py-8">
+                        <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600">कोई सदस्यता भुगतान अनुरोध नहीं</p>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Notification Management */}
-              <TabsContent value="notifications">
-                <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-0 rounded-2xl">
-                  <CardHeader>
-                    <CardTitle className="text-purple-800 flex items-center gap-2">
-                      <Bell className="h-5 w-5" />
-                      सूचना प्रबंधन
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {/* Add New Notification */}
-                      <div className="bg-white p-6 rounded-xl shadow-lg">
-                        <h4 className="font-bold text-gray-800 mb-4">नई सूचना जोड़ें</h4>
-                        <div className="space-y-4">
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <input
-                              type="text"
-                              placeholder="सूचना का शीर्षक"
-                              className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500"
-                            />
-                            <select className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500">
-                              <option value="info">जानकारी</option>
-                              <option value="warning">चेतावनी</option>
-                              <option value="success">सफलता</option>
-                              <option value="emergency">आपातकाल</option>
-                            </select>
-                          </div>
-                          <textarea
-                            placeholder="सूचना का विवरण"
-                            rows={4}
-                            className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500"
-                          />
-                          <Button className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 rounded-xl font-bold">
-                            <Bell className="h-4 w-4 mr-2" />
-                            सूचना प्रकाशित करें
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Existing Notifications */}
-                      <div className="bg-white p-6 rounded-xl shadow-lg">
-                        <h4 className="font-bold text-gray-800 mb-4">मौजूदा सूचनाएं</h4>
-                        <div className="space-y-3">
-                          {[
-                            { id: 1, title: "नई सदस्यता शुल्क दरें", type: "warning", date: "2024-03-15" },
-                            { id: 2, title: "वार्षिक सभा की सूचना", type: "info", date: "2024-03-10" },
-                            { id: 3, title: "आपातकालीन सहायता", type: "emergency", date: "2024-03-08" },
-                          ].map((notification) => (
-                            <div
-                              key={notification.id}
-                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                            >
-                              <div className="flex-1">
-                                <h5 className="font-semibold text-gray-800">{notification.title}</h5>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Badge
-                                    className={`text-xs ${
-                                      notification.type === "emergency"
-                                        ? "bg-red-100 text-red-800"
-                                        : notification.type === "warning"
-                                          ? "bg-yellow-100 text-yellow-800"
-                                          : notification.type === "success"
-                                            ? "bg-green-100 text-green-800"
-                                            : "bg-blue-100 text-blue-800"
-                                    }`}
-                                  >
-                                    {notification.type === "emergency" && "आपातकाल"}
-                                    {notification.type === "warning" && "चेतावनी"}
-                                    {notification.type === "success" && "सफलता"}
-                                    {notification.type === "info" && "जानकारी"}
+                    ) : (
+                      <div className="space-y-4">
+                        {membershipPayments.map((payment) => (
+                          <Card key={payment.id} className="border-2 border-blue-200 bg-white">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <h3 className="font-bold text-lg">{payment.users?.name || 'Unknown'}</h3>
+                                  <p className="text-gray-600">{payment.users?.phone}</p>
+                                  <p className="text-gray-600">{payment.users?.store_name}</p>
+                                  <p className="text-gray-600">{payment.users?.location}</p>
+                                  <p className="text-green-600 font-bold">₹{payment.amount}</p>
+                                  <p className="text-sm text-gray-500">
+                                    {new Date(payment.payment_date).toLocaleDateString('hi-IN')}
+                                  </p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Badge className={`${
+                                    payment.status === 'approved' ? 'bg-green-500' :
+                                    payment.status === 'rejected' ? 'bg-red-500' :
+                                    'bg-yellow-500'
+                                  } text-white`}>
+                                    {payment.status === 'approved' ? 'स्वीकृत' :
+                                     payment.status === 'rejected' ? 'अस्वीकृत' :
+                                     'लंबित'}
                                   </Badge>
-                                  <span className="text-sm text-gray-500">{notification.date}</span>
+                                  {payment.status === 'pending' && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleApprove('membership', payment.id)}
+                                        className="bg-green-500 hover:bg-green-600"
+                                      >
+                                        <CheckCircle className="h-4 w-4 mr-1" />
+                                        स्वीकृत
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleReject('membership', payment.id)}
+                                      >
+                                        <X className="h-4 w-4 mr-1" />
+                                        अस्वीकृत
+                                      </Button>
+                                    </>
+                                  )}
                                 </div>
                               </div>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => console.log(`Delete notification ${notification.id}`)}
-                              >
-                                <X className="h-4 w-4 mr-1" />
-                                हटाएं
-                              </Button>
-                            </div>
-                          ))}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Donations Tab */}
+              <TabsContent value="donations">
+                <Card className="bg-gradient-to-br from-red-50 to-pink-50 border-0 rounded-2xl shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-red-800">
+                      <Heart className="h-6 w-6" />
+                      दान अनुरोध
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loading.donations ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">डेटा लोड हो रहा है...</p>
+                      </div>
+                    ) : donations.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600">कोई दान अनुरोध नहीं</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {donations.map((donation) => (
+                          <Card key={donation.id} className="border-2 border-red-200 bg-white">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <h3 className="font-bold text-lg">{donation.users?.name || 'Unknown'}</h3>
+                                  <p className="text-gray-600">{donation.users?.phone}</p>
+                                  <p className="text-gray-600">प्राप्तकर्ता: {donation.recipient_name}</p>
+                                  <p className="text-green-600 font-bold">₹{donation.amount}</p>
+                                  <p className="text-sm text-gray-500">
+                                    {new Date(donation.donation_date).toLocaleDateString('hi-IN')}
+                                  </p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Badge className={`${
+                                    donation.status === 'approved' ? 'bg-green-500' :
+                                    donation.status === 'rejected' ? 'bg-red-500' :
+                                    'bg-yellow-500'
+                                  } text-white`}>
+                                    {donation.status === 'approved' ? 'स्वीकृत' :
+                                     donation.status === 'rejected' ? 'अस्वीकृत' :
+                                     'लंबित'}
+                                  </Badge>
+                                  {donation.status === 'pending' && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleApprove('donation', donation.id)}
+                                        className="bg-green-500 hover:bg-green-600"
+                                      >
+                                        <CheckCircle className="h-4 w-4 mr-1" />
+                                        स्वीकृत
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleReject('donation', donation.id)}
+                                      >
+                                        <X className="h-4 w-4 mr-1" />
+                                        अस्वीकृत
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Registrations Tab */}
+              <TabsContent value="registrations">
+                <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-0 rounded-2xl shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-green-800">
+                      <Users className="h-6 w-6" />
+                      नए सदस्य रजिस्ट्रेशन
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loading.users ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">डेटा लोड हो रहा है...</p>
+                      </div>
+                    ) : users.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600">कोई नया रजिस्ट्रेशन नहीं</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {users.map((user) => (
+                          <Card key={user.id} className="border-2 border-green-200 bg-white">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <h3 className="font-bold text-lg">{user.name}</h3>
+                                  <p className="text-gray-600">{user.phone}</p>
+                                  <p className="text-gray-600">{user.store_name}</p>
+                                  <p className="text-gray-600">{user.location}</p>
+                                  <p className="text-sm text-gray-500">
+                                    {new Date(user.created_at).toLocaleDateString('hi-IN')}
+                                  </p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Badge className={`${
+                                    user.status === 'approved' ? 'bg-green-500' :
+                                    user.status === 'rejected' ? 'bg-red-500' :
+                                    'bg-yellow-500'
+                                  } text-white`}>
+                                    {user.status === 'approved' ? 'स्वीकृत' :
+                                     user.status === 'rejected' ? 'अस्वीकृत' :
+                                     'लंबित'}
+                                  </Badge>
+                                  {user.status === 'pending' && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleApprove('user', user.id)}
+                                        className="bg-green-500 hover:bg-green-600"
+                                      >
+                                        <CheckCircle className="h-4 w-4 mr-1" />
+                                        स्वीकृत
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleReject('user', user.id)}
+                                      >
+                                        <X className="h-4 w-4 mr-1" />
+                                        अस्वीकृत
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Emergency Tab */}
+              <TabsContent value="emergency">
+                <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-0 rounded-2xl shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-orange-800">
+                      <AlertTriangle className="h-6 w-6" />
+                      दुर्घटना प्रबंधन
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            सदस्य चुनें
+                          </label>
+                          <select
+                            value={selectedMember}
+                            onChange={(e) => setSelectedMember(e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          >
+                            <option value="">सदस्य चुनें</option>
+                            {users.map((user) => (
+                              <option key={user.id} value={user.id}>
+                                {user.name} - {user.phone}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            दुर्घटना का प्रकार
+                          </label>
+                          <select
+                            value={accidentType}
+                            onChange={(e) => setAccidentType(e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          >
+                            <option value="">प्रकार चुनें</option>
+                            <option value="हृदयाघात">हृदयाघात</option>
+                            <option value="कैंसर">कैंसर</option>
+                            <option value="दुर्घटना">दुर्घटना</option>
+                            <option value="अन्य">अन्य</option>
+                          </select>
                         </div>
                       </div>
+                      {accidentType === "अन्य" && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            कस्टम दुर्घटना प्रकार
+                          </label>
+                          <Input
+                            type="text"
+                            value={customAccidentType}
+                            onChange={(e) => setCustomAccidentType(e.target.value)}
+                            placeholder="दुर्घटना का प्रकार लिखें"
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+                      <Button
+                        onClick={handleAddAccident}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                      >
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        दुर्घटना जोड़ें
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              {/* Gallery Management */}
+              {/* Gallery Tab */}
               <TabsContent value="gallery">
-                <Card className="bg-gradient-to-br from-pink-50 to-rose-50 border-0 rounded-2xl">
+                <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-0 rounded-2xl shadow-lg">
                   <CardHeader>
-                    <CardTitle className="text-pink-800 flex items-center gap-2">
-                      <Camera className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2 text-purple-800">
+                      <Camera className="h-6 w-6" />
                       गैलरी प्रबंधन
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
                       {/* Add New Image */}
-                      <div className="bg-white p-6 rounded-xl shadow-lg">
-                        <h4 className="font-bold text-gray-800 mb-4">नई फोटो जोड़ें</h4>
-                        <div className="space-y-4">
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <Input
-                              type="text"
-                              placeholder="फोटो का शीर्षक"
-                              value={newImageTitle}
-                              onChange={(e) => setNewImageTitle(e.target.value)}
-                              className="rounded-xl border-2 border-pink-200 focus:border-pink-500"
-                            />
-                            <select
-                              value={newImageCategory}
-                              onChange={(e) => setNewImageCategory(e.target.value)}
-                              className="w-full p-3 border-2 border-pink-200 rounded-xl focus:border-pink-500"
-                            >
-                              <option value="events">कार्यक्रम</option>
-                              <option value="awards">पुरस्कार</option>
-                              <option value="charity">दान</option>
-                              <option value="members">सदस्य</option>
-                              <option value="health">स्वास्थ्य</option>
-                              <option value="community">सामुदायिक</option>
-                              <option value="festivals">त्योहार</option>
-                              <option value="meetings">बैठक</option>
-                              <option value="youth">युवा</option>
-                            </select>
-                          </div>
+                      <div className="bg-white p-4 rounded-lg border-2 border-purple-200">
+                        <h3 className="font-bold text-lg mb-4">नई तस्वीर जोड़ें</h3>
+                        <div className="grid md:grid-cols-3 gap-4">
                           <Input
-                            type="file"
-                            accept="image/*"
-                            className="rounded-xl border-2 border-pink-200 focus:border-pink-500"
+                            type="text"
+                            value={newImageTitle}
+                            onChange={(e) => setNewImageTitle(e.target.value)}
+                            placeholder="तस्वीर का शीर्षक"
                           />
-                          <Button
-                            onClick={handleAddImage}
-                            className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 rounded-xl font-bold"
+                          <select
+                            value={newImageCategory}
+                            onChange={(e) => setNewImageCategory(e.target.value)}
+                            className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           >
+                            <option value="events">कार्यक्रम</option>
+                            <option value="awards">पुरस्कार</option>
+                            <option value="charity">दान</option>
+                            <option value="members">सदस्य</option>
+                            <option value="health">स्वास्थ्य</option>
+                          </select>
+                          <Button onClick={handleAddImage} className="bg-purple-500 hover:bg-purple-600">
                             <Upload className="h-4 w-4 mr-2" />
-                            फोटो अपलोड करें
+                            जोड़ें
                           </Button>
                         </div>
                       </div>
 
-                      {/* Gallery Statistics */}
-                      <div className="grid md:grid-cols-4 gap-4">
-                        <Card className="bg-gradient-to-br from-blue-100 to-blue-200 border-0 rounded-xl">
-                          <CardContent className="p-4 text-center">
-                            <Camera className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                            <h3 className="text-xl font-bold text-blue-800">{galleryImages.length}</h3>
-                            <p className="text-blue-600 text-sm">कुल फोटो</p>
-                          </CardContent>
-                        </Card>
-                        <Card className="bg-gradient-to-br from-green-100 to-green-200 border-0 rounded-xl">
-                          <CardContent className="p-4 text-center">
-                            <FileText className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                            <h3 className="text-xl font-bold text-green-800">
-                              {new Set(galleryImages.map((img) => img.category)).size}
-                            </h3>
-                            <p className="text-green-600 text-sm">श्रेणियां</p>
-                          </CardContent>
-                        </Card>
-                        <Card className="bg-gradient-to-br from-purple-100 to-purple-200 border-0 rounded-xl">
-                          <CardContent className="p-4 text-center">
-                            <Upload className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                            <h3 className="text-xl font-bold text-purple-800">
-                              {
-                                galleryImages.filter((img) => img.uploadDate === new Date().toISOString().split("T")[0])
-                                  .length
-                              }
-                            </h3>
-                            <p className="text-purple-600 text-sm">आज अपलोड</p>
-                          </CardContent>
-                        </Card>
-                        <Card className="bg-gradient-to-br from-orange-100 to-orange-200 border-0 rounded-xl">
-                          <CardContent className="p-4 text-center">
-                            <Heart className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                            <h3 className="text-xl font-bold text-orange-800">
-                              {galleryImages.filter((img) => img.category === "events").length}
-                            </h3>
-                            <p className="text-orange-600 text-sm">कार्यक्रम फोटो</p>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      {/* Existing Images */}
-                      <div className="bg-white p-6 rounded-xl shadow-lg">
-                        <h4 className="font-bold text-gray-800 mb-4">मौजूदा फोटो ({galleryImages.length})</h4>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                      {/* Gallery Images */}
+                      {loading.gallery ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                          <p className="text-gray-600">गैलरी लोड हो रही है...</p>
+                        </div>
+                      ) : (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {galleryImages.map((image) => (
-                            <div key={image.id} className="relative group">
-                              <img
-                                src={image.src || "/placeholder.svg"}
-                                alt={image.title}
-                                className="w-full h-32 object-cover rounded-lg"
-                              />
-                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleDeleteImage(image.id)}
-                                  className="rounded-full"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 rounded-b-lg">
-                                <h5 className="text-white text-sm font-semibold truncate">{image.title}</h5>
-                                <div className="flex items-center justify-between">
-                                  <Badge className="text-xs bg-white/20 text-white">
-                                    {getCategoryName(image.category)}
-                                  </Badge>
-                                  <span className="text-white text-xs">{image.uploadDate}</span>
+                            <Card key={image.id} className="border-2 border-purple-200 bg-white">
+                              <div className="relative">
+                                <img
+                                  src={image.image_url}
+                                  alt={image.title}
+                                  className="w-full h-48 object-cover rounded-t-lg"
+                                />
+                                <div className="absolute top-2 right-2">
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDeleteImage(image.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
                                 </div>
                               </div>
-                            </div>
+                              <CardContent className="p-4">
+                                <h3 className="font-bold text-lg">{image.title}</h3>
+                                <p className="text-purple-600 font-medium">
+                                  #{getCategoryName(image.category)}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(image.created_at).toLocaleDateString('hi-IN')}
+                                </p>
+                              </CardContent>
+                            </Card>
                           ))}
                         </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Notifications Tab */}
+              <TabsContent value="notifications">
+                <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-0 rounded-2xl shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-blue-800">
+                      <Bell className="h-6 w-6" />
+                      सूचना प्रबंधन
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Add New Notification */}
+                      <div className="bg-white p-4 rounded-lg border-2 border-blue-200">
+                        <h3 className="font-bold text-lg mb-4">नई सूचना जोड़ें</h3>
+                        <div className="space-y-4">
+                          <Input
+                            type="text"
+                            value={newNotificationTitle}
+                            onChange={(e) => setNewNotificationTitle(e.target.value)}
+                            placeholder="सूचना का शीर्षक"
+                          />
+                          <textarea
+                            value={newNotificationMessage}
+                            onChange={(e) => setNewNotificationMessage(e.target.value)}
+                            placeholder="सूचना का विवरण"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            rows={3}
+                          />
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <select
+                              value={newNotificationType}
+                              onChange={(e) => setNewNotificationType(e.target.value as any)}
+                              className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="info">जानकारी</option>
+                              <option value="warning">चेतावनी</option>
+                              <option value="success">सफलता</option>
+                              <option value="emergency">आपातकाल</option>
+                            </select>
+                            <Button onClick={handleAddNotification} className="bg-blue-500 hover:bg-blue-600">
+                              <Bell className="h-4 w-4 mr-2" />
+                              सूचना जोड़ें
+                            </Button>
+                          </div>
+                        </div>
                       </div>
+
+                      {/* Existing Notifications */}
+                      {loading.notifications ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                          <p className="text-gray-600">सूचनाएं लोड हो रही हैं...</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {notifications.map((notification) => (
+                            <Card key={notification.id} className="border-2 border-blue-200 bg-white">
+                              <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <h3 className="font-bold text-lg">{notification.title}</h3>
+                                    <p className="text-gray-600">{notification.message}</p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                      <Badge className={`${
+                                        notification.type === 'emergency' ? 'bg-red-500' :
+                                        notification.type === 'warning' ? 'bg-yellow-500' :
+                                        notification.type === 'success' ? 'bg-green-500' :
+                                        'bg-blue-500'
+                                      } text-white`}>
+                                        {notification.type === 'emergency' ? 'आपातकाल' :
+                                         notification.type === 'warning' ? 'चेतावनी' :
+                                         notification.type === 'success' ? 'सफलता' :
+                                         'जानकारी'}
+                                      </Badge>
+                                      <span className="text-sm text-gray-500">
+                                        {new Date(notification.created_at).toLocaleDateString('hi-IN')}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -731,169 +894,6 @@ export default function AdminPage(appState: AppState) {
           </CardContent>
         </Card>
       </div>
-
-      {/* Receipt Image Modal */}
-      {selectedReceiptImage && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedReceiptImage(null)}
-        >
-          <div className="bg-white rounded-2xl p-6 max-w-2xl max-h-[90vh] overflow-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-800">भुगतान रसीद</h3>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedReceiptImage(null)} className="rounded-full">
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <img
-              src={selectedReceiptImage || "/placeholder.svg"}
-              alt="Payment Receipt"
-              className="w-full max-h-96 object-contain rounded-lg"
-            />
-            <div className="flex gap-2 mt-4">
-              <Button className="flex-1 bg-green-500 hover:bg-green-600">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                स्वीकार करें
-              </Button>
-              <Button variant="destructive" className="flex-1">
-                <X className="h-4 w-4 mr-2" />
-                अस्वीकार करें
-              </Button>
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                डाउनलोड
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Member Details Modal */}
-      {selectedMemberDetails && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedMemberDetails(null)}
-        >
-          <div className="bg-white rounded-2xl p-6 max-w-4xl max-h-[90vh] overflow-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-800">सदस्य का पूरा विवरण</h3>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedMemberDetails(null)} className="rounded-full">
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Personal Information */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-bold text-blue-800 border-b pb-2">व्यक्तिगत जानकारी</h4>
-                <div className="space-y-2">
-                  <p>
-                    <strong>नाम:</strong> {selectedMemberDetails.name}
-                  </p>
-                  <p>
-                    <strong>फ़ोन:</strong> {selectedMemberDetails.phone}
-                  </p>
-                  <p>
-                    <strong>आधार:</strong> {selectedMemberDetails.aadhar}
-                  </p>
-                  <p>
-                    <strong>पता:</strong> {selectedMemberDetails.location}
-                  </p>
-                </div>
-
-                <h4 className="text-lg font-bold text-green-800 border-b pb-2 mt-6">व्यापारिक जानकारी</h4>
-                <div className="space-y-2">
-                  <p>
-                    <strong>स्टोर नाम:</strong> {selectedMemberDetails.storeName}
-                  </p>
-                  <p>
-                    <strong>GST नंबर:</strong> {selectedMemberDetails.gstNumber}
-                  </p>
-                  <p>
-                    <strong>ड्रग लाइसेंस:</strong> {selectedMemberDetails.drugLicenseNumber}
-                  </p>
-                  <p>
-                    <strong>फूड लाइसेंस:</strong> {selectedMemberDetails.foodLicenseNumber}
-                  </p>
-                </div>
-
-                <h4 className="text-lg font-bold text-indigo-800 border-b pb-2 mt-6">बैंक जानकारी</h4>
-                <div className="space-y-2">
-                  <p>
-                    <strong>खाता नंबर:</strong> {selectedMemberDetails.accountNumber}
-                  </p>
-                  <p>
-                    <strong>IFSC:</strong> {selectedMemberDetails.ifsc}
-                  </p>
-                  <p>
-                    <strong>शाखा:</strong> {selectedMemberDetails.branch}
-                  </p>
-                </div>
-              </div>
-
-              {/* Nominee Information */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-bold text-pink-800 border-b pb-2">नॉमिनी की जानकारी</h4>
-                <div className="space-y-2">
-                  <p>
-                    <strong>नॉमिनी नाम:</strong> {selectedMemberDetails.nomineeName}
-                  </p>
-                  <p>
-                    <strong>रिश्ता:</strong> {selectedMemberDetails.nomineeRelation}
-                  </p>
-                  <p>
-                    <strong>फ़ोन:</strong> {selectedMemberDetails.nomineePhone}
-                  </p>
-                </div>
-
-                <h4 className="text-lg font-bold text-rose-800 border-b pb-2 mt-6">नॉमिनी बैंक जानकारी</h4>
-                <div className="space-y-2">
-                  <p>
-                    <strong>खाता नंबर:</strong> {selectedMemberDetails.nomineeAccountNumber}
-                  </p>
-                  <p>
-                    <strong>IFSC:</strong> {selectedMemberDetails.nomineeIfsc}
-                  </p>
-                  <p>
-                    <strong>शाखा:</strong> {selectedMemberDetails.nomineeBranch}
-                  </p>
-                </div>
-
-                <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-xl mt-6">
-                  <h5 className="font-bold text-orange-800 mb-2">⚠️ महत्वपूर्ण सूचना:</h5>
-                  <p className="text-orange-700 text-sm">
-                    दुर्घटना की स्थिति में सहायता राशि सीधे नॉमिनी के बैंक खाते में भेजी जाएगी।
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4 mt-8 pt-6 border-t">
-              <Button
-                className="flex-1 bg-green-500 hover:bg-green-600 h-12 text-lg"
-                onClick={() => {
-                  handleApprove("registration", selectedMemberDetails.id)
-                  setSelectedMemberDetails(null)
-                }}
-              >
-                <CheckCircle className="h-5 w-5 mr-2" />
-                रजिस्ट्रेशन स्वीकार करें
-              </Button>
-              <Button
-                variant="destructive"
-                className="flex-1 h-12 text-lg"
-                onClick={() => {
-                  handleReject("registration", selectedMemberDetails.id)
-                  setSelectedMemberDetails(null)
-                }}
-              >
-                <X className="h-5 w-5 mr-2" />
-                रजिस्ट्रेशन अस्वीकार करें
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
