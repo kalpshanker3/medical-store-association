@@ -88,7 +88,7 @@ export default function RegisterPage(appState: AppState) {
     setIsLoading(true)
     try {
       // 1. Register with Supabase Auth using phone as email
-      const email = formData.phone + "@example.com"
+      const email = `${formData.phone}@example.com`
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password: formData.password
