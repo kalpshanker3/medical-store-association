@@ -34,7 +34,7 @@ export default function LoginPage(appState: AppState) {
     setIsLoading(true)
     try {
       // Use phone as email for Supabase Auth
-      const email = formData.phone + "@example.com"
+      const email = `${formData.phone}@example.com`
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password: formData.password
