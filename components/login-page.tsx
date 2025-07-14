@@ -56,11 +56,7 @@ export default function LoginPage(appState: AppState) {
         setError("")
         appState.setCurrentPage("status")
       } else {
-        // Log out if profile is missing
-        await supabase.auth.signOut()
-        appState.setUser(null)
-        appState.setIsLoggedIn(false)
-        setError("यूज़र प्रोफाइल नहीं मिली, कृपया फिर से रजिस्टर करें।")
+        setError("यूज़र प्रोफाइल नहीं मिली")
       }
     } catch (error) {
       setError("लॉगिन में त्रुटि हुई")
