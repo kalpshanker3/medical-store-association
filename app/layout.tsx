@@ -1,6 +1,5 @@
 "use client"
 
-import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -9,13 +8,6 @@ import { supabase } from "@/lib/supabase"
 import type { User } from "@/lib/supabase"
 
 const inter = Inter({ subsets: ["latin"] })
-
-export const metadata: Metadata = {
-  title: "Medical Store Association",
-  description: "Medical Store Association Management System",
-  viewport: "width=device-width, initial-scale=1",
-  themeColor: "#3b82f6",
-}
 
 export default function RootLayout({
   children,
@@ -90,6 +82,12 @@ export default function RootLayout({
   if (isLoading) {
     return (
       <html lang="en">
+        <head>
+          <title>Medical Store Association</title>
+          <meta name="description" content="Medical Store Association Management System" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="theme-color" content="#3b82f6" />
+        </head>
         <body className={inter.className}>
           <ThemeProvider
             attribute="class"
@@ -111,6 +109,12 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <title>Medical Store Association</title>
+        <meta name="description" content="Medical Store Association Management System" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#3b82f6" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
