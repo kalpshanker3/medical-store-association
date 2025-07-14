@@ -205,31 +205,163 @@ export default function RegisterPage(appState: AppState) {
               </form>
             ) : (
               <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-6">
-                {/* All other required fields, similar to your original form, each with required and * */}
-                {/* ... (reuse your previous form fields here, all required) ... */}
-                {/* Example for name: */}
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
                     <User className="h-4 w-4" />
                     नाम *
                   </label>
-                  <Input
-                    required
-                    placeholder="अपना पूरा नाम लिखें"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black"
-                  />
+                  <Input required placeholder="अपना पूरा नाम लिखें" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
                 </div>
-                {/* Repeat for all other fields, all required, as in your previous form */}
-                {/* ... */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    वैकल्पिक नंबर *
+                  </label>
+                  <Input required type="tel" placeholder="दूसरा मोबाइल नंबर (वैकल्पिक)" value={formData.alternatePhone} onChange={(e) => setFormData({ ...formData, alternatePhone: e.target.value })} className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black" maxLength={10} />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    आयु *
+                  </label>
+                  <Input required type="number" placeholder="आपकी उम्र" value={formData.age} onChange={(e) => setFormData({ ...formData, age: e.target.value })} className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                    <Hash className="h-4 w-4" />
+                    आधार नंबर *
+                  </label>
+                  <Input required placeholder="1234-5678-9012" value={formData.aadhar} onChange={(e) => setFormData({ ...formData, aadhar: e.target.value })} className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    स्थान *
+                  </label>
+                  <Input required placeholder="शहर/गांव" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    स्टोर का नाम *
+                  </label>
+                  <Input required placeholder="मेडिकल स्टोर का नाम" value={formData.storeName} onChange={(e) => setFormData({ ...formData, storeName: e.target.value })} className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                    <Banknote className="h-4 w-4" />
+                    GST नंबर *
+                  </label>
+                  <Input required placeholder="GST नंबर" value={formData.gstNumber} onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value })} className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    दवा लाइसेंस नंबर *
+                  </label>
+                  <Input required placeholder="दवा लाइसेंस नंबर" value={formData.drugLicenseNumber} onChange={(e) => setFormData({ ...formData, drugLicenseNumber: e.target.value })} className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    दवा लाइसेंस शुरू करने का तिथि *
+                  </label>
+                  <Input required type="date" value={formData.drugLicenseStartDate} onChange={(e) => setFormData({ ...formData, drugLicenseStartDate: e.target.value })} className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    दवा लाइसेंस समाप्त करने का तिथि *
+                  </label>
+                  <Input required type="date" value={formData.drugLicenseEndDate} onChange={(e) => setFormData({ ...formData, drugLicenseEndDate: e.target.value })} className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    खाद्य लाइसेंस नंबर *
+                  </label>
+                  <Input required placeholder="खाद्य लाइसेंस नंबर" value={formData.foodLicenseNumber} onChange={(e) => setFormData({ ...formData, foodLicenseNumber: e.target.value })} className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    खाद्य लाइसेंस शुरू करने का तिथि *
+                  </label>
+                  <Input required type="date" value={formData.foodLicenseStartDate} onChange={(e) => setFormData({ ...formData, foodLicenseStartDate: e.target.value })} className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-green-800 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    खाद्य लाइसेंस समाप्त करने का तिथि *
+                  </label>
+                  <Input required type="date" value={formData.foodLicenseEndDate} onChange={(e) => setFormData({ ...formData, foodLicenseEndDate: e.target.value })} className="rounded-xl border-2 border-green-200 focus:border-green-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-yellow-800 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    खाता नंबर *
+                  </label>
+                  <Input required placeholder="खाता नंबर" value={formData.accountNumber} onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })} className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-yellow-800 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    IFSC कोड *
+                  </label>
+                  <Input required placeholder="IFSC कोड" value={formData.ifsc} onChange={(e) => setFormData({ ...formData, ifsc: e.target.value })} className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-yellow-800 flex items-center gap-2">
+                    <Building className="h-4 w-4" />
+                    शाखा *
+                  </label>
+                  <Input required placeholder="बैंक शाखा" value={formData.branch} onChange={(e) => setFormData({ ...formData, branch: e.target.value })} className="rounded-xl border-2 border-yellow-200 focus:border-yellow-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    नामांकित का नाम *
+                  </label>
+                  <Input required placeholder="नामांकित का नाम" value={formData.nomineeName} onChange={(e) => setFormData({ ...formData, nomineeName: e.target.value })} className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    संबंध *
+                  </label>
+                  <Input required placeholder="संबंध (पिता, पुत्र, आदि)" value={formData.nomineeRelation} onChange={(e) => setFormData({ ...formData, nomineeRelation: e.target.value })} className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    फोन नंबर *
+                  </label>
+                  <Input required placeholder="नामांकित का फोन" value={formData.nomineePhone} onChange={(e) => setFormData({ ...formData, nomineePhone: e.target.value })} className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black" maxLength={10} />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    खाता नंबर *
+                  </label>
+                  <Input required placeholder="नामांकित का खाता" value={formData.nomineeAccountNumber} onChange={(e) => setFormData({ ...formData, nomineeAccountNumber: e.target.value })} className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    IFSC कोड *
+                  </label>
+                  <Input required placeholder="नामांकित का IFSC" value={formData.nomineeIfsc} onChange={(e) => setFormData({ ...formData, nomineeIfsc: e.target.value })} className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-pink-800 flex items-center gap-2">
+                    <Building className="h-4 w-4" />
+                    शाखा *
+                  </label>
+                  <Input required placeholder="नामांकित का बैंक" value={formData.nomineeBranch} onChange={(e) => setFormData({ ...formData, nomineeBranch: e.target.value })} className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
                 {error && <div className="text-red-600 font-bold text-center">{error}</div>}
                 <div className="flex justify-center">
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-colors duration-300"
-                  >
+                  <Button type="submit" disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-colors duration-300">
                     {isLoading ? "रजिस्टर हो रहा है..." : "रजिस्टर करें"}
                   </Button>
                 </div>
