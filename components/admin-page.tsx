@@ -249,15 +249,14 @@ export default function AdminPage(appState: AppState) {
     setLoading(true)
     setError(null)
     try {
+      // 1. Upload to Supabase Storage
       const filePath = `${Date.now()}_${newImageFile.name}`
-      // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage.from('gallery').upload(filePath, newImageFile)
-      if (uploadError || !uploadData) throw uploadError || new Error('Upload failed')
-      // Get the public URL
-      const { data: urlData, error: urlError } = supabase.storage.from('gallery').getPublicUrl(filePath)
-      if (urlError || !urlData || !urlData.publicUrl) throw urlError || new Error('Failed to get public URL')
+      if (uploadError) throw uploadError
+      // 2. Get public URL
+      const { data: urlData } = supabase.storage.from('gallery').getPublicUrl(filePath)
       const imageUrl = urlData.publicUrl
-      // Insert into gallery table
+      // 3. Insert into gallery table
       const { error } = await supabase
         .from('gallery')
         .insert({
