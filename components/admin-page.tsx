@@ -488,7 +488,7 @@ export default function AdminPage(appState: AppState) {
                                     payment.status === 'approved' ? 'bg-green-500' :
                                     payment.status === 'rejected' ? 'bg-red-500' :
                                     'bg-yellow-500'
-                                  } text-white`}>
+                                  } text-gray-800`}>
                                     {payment.status === 'approved' ? 'स्वीकृत' :
                                      payment.status === 'rejected' ? 'अस्वीकृत' :
                                      'लंबित'}
@@ -564,7 +564,7 @@ export default function AdminPage(appState: AppState) {
                                     donation.status === 'approved' ? 'bg-green-500' :
                                     donation.status === 'rejected' ? 'bg-red-500' :
                                     'bg-yellow-500'
-                                  } text-white`}>
+                                  } text-gray-800`}>
                                     {donation.status === 'approved' ? 'स्वीकृत' :
                                      donation.status === 'rejected' ? 'अस्वीकृत' :
                                      'लंबित'}
@@ -640,7 +640,7 @@ export default function AdminPage(appState: AppState) {
                                     user.status === 'approved' ? 'bg-green-500' :
                                     user.status === 'rejected' ? 'bg-red-500' :
                                     'bg-yellow-500'
-                                  } text-white`}>
+                                  } text-gray-800`}>
                                     {user.status === 'approved' ? 'स्वीकृत' :
                                      user.status === 'rejected' ? 'अस्वीकृत' :
                                      'लंबित'}

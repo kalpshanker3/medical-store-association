@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Home, Users, Bell, User, Building, Menu, X, ArrowLeft } from "lucide-react"
 import type { AppState } from "../app/page"
 import Link from "next/link"
+import { useAuth } from "../app/layout"
 
-export default function Navbar({ isLoggedIn, setIsLoggedIn, user, setUser, logout }: any) {
+export default function Navbar() {
+  const { isLoggedIn, user, logout, setUser, setIsLoggedIn } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {

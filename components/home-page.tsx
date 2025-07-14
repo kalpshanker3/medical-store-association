@@ -203,12 +203,10 @@ export default function HomePage(appState: AppState) {
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
+        {/* Action Buttons - Three in a row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8 sm:mb-12">
           <Link href="/contact">
-            <Button
-              className="h-20 sm:h-24 text-lg sm:text-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile border-2 border-white/20 backdrop-blur-sm group"
-            >
+            <Button className="h-20 sm:h-24 text-lg sm:text-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile border-2 border-white/20 backdrop-blur-sm group w-full">
               <div className="flex flex-col items-center gap-2 group-hover:scale-110 transition-transform duration-300">
                 <span className="text-2xl sm:text-3xl drop-shadow-lg">📞</span>
                 <span className="drop-shadow-sm">संपर्क करें</span>
@@ -216,9 +214,7 @@ export default function HomePage(appState: AppState) {
             </Button>
           </Link>
           <Link href="/gallery">
-            <Button
-              className="h-20 sm:h-24 text-lg sm:text-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile border-2 border-white/20 backdrop-blur-sm group"
-            >
+            <Button className="h-20 sm:h-24 text-lg sm:text-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile border-2 border-white/20 backdrop-blur-sm group w-full">
               <div className="flex flex-col items-center gap-2 group-hover:scale-110 transition-transform duration-300">
                 <span className="text-2xl sm:text-3xl drop-shadow-lg">🖼️</span>
                 <span className="drop-shadow-sm">गैलरी</span>
@@ -226,17 +222,18 @@ export default function HomePage(appState: AppState) {
             </Button>
           </Link>
           <Link href="/faq">
-            <Button
-              className="h-20 sm:h-24 text-lg sm:text-xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 hover:from-violet-600 hover:via-purple-600 hover:to-fuchsia-600 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile sm:col-span-2 lg:col-span-1 border-2 border-white/20 backdrop-blur-sm group"
-            >
+            <Button className="h-20 sm:h-24 text-lg sm:text-xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 hover:from-violet-600 hover:via-purple-600 hover:to-fuchsia-600 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile border-2 border-white/20 backdrop-blur-sm group w-full">
               <div className="flex flex-col items-center gap-2 group-hover:scale-110 transition-transform duration-300">
                 <span className="text-2xl sm:text-3xl drop-shadow-lg">❓</span>
                 <span className="drop-shadow-sm">प्रश्न उत्तर</span>
               </div>
             </Button>
           </Link>
+        </div>
+        {/* Admin Button - Separate row */}
+        <div className="flex justify-center mb-8 sm:mb-12">
           <Button
-            className="h-20 sm:h-24 text-lg sm:text-xl bg-gradient-to-br from-slate-600 via-gray-600 to-zinc-600 hover:from-slate-700 hover:via-gray-700 hover:to-zinc-700 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile border-2 border-white/20 backdrop-blur-sm group"
+            className="h-20 sm:h-24 text-lg sm:text-xl bg-gradient-to-br from-slate-600 via-gray-600 to-zinc-600 hover:from-slate-700 hover:via-gray-700 hover:to-zinc-700 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile border-2 border-white/20 backdrop-blur-sm group w-full max-w-lg"
             onClick={() => {
               if (!appState.isLoggedIn) {
                 alert("कृपया पहले लॉग इन करें");
@@ -255,15 +252,14 @@ export default function HomePage(appState: AppState) {
             </div>
           </Button>
         </div>
-
-        {/* Payment History Button for logged in users */}
+        {/* Payment History Button for logged in users - Wide row at bottom */}
         {appState.isLoggedIn && (
           <div className="text-center mb-12 sm:mb-16">
             <Link href="/payment-history">
               <Button
-                className="h-20 sm:h-24 px-12 sm:px-16 text-lg sm:text-xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile border-2 border-white/20 backdrop-blur-sm group"
+                className="h-20 sm:h-24 px-12 sm:px-16 text-lg sm:text-xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile border-2 border-white/20 backdrop-blur-sm group w-full max-w-2xl mx-auto"
               >
-                <div className="flex items-center gap-4 group-hover:scale-110 transition-transform duration-300">
+                <div className="flex items-center gap-4 group-hover:scale-110 transition-transform duration-300 justify-center">
                   <CreditCard className="h-6 w-6 sm:h-8 sm:w-8 drop-shadow-sm" />
                   <span className="drop-shadow-sm">💳 भुगतान इतिहास</span>
                 </div>
