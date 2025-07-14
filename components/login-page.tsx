@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { User, Phone, Shield, CheckCircle, Eye, EyeOff } from "lucide-react"
 import Navbar from "./navbar"
-import type { AppState } from "../app/page"
+import type { AppState } from "../lib/types"
 import { loginUser } from "../lib/auth"
+import { supabase } from "@/lib/supabase"
 
 export default function LoginPage(appState: AppState) {
   const [formData, setFormData] = useState({
@@ -32,13 +33,29 @@ export default function LoginPage(appState: AppState) {
     }
     setIsLoading(true)
     try {
-      const result = await loginUser(formData.phone, formData.password)
-      if (result.success && result.user) {
-        appState.setUser(result.user)
+      // Use Supabase Auth for login
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: formData.phone + "@example.com", // or use email if you store phone as email
+        password: formData.password
+      })
+      if (authError || !data.session) {
+        setError("फोन नंबर या पासवर्ड गलत है")
+        setIsLoading(false)
+        return
+      }
+      // Fetch user profile from DB
+      const { data: userProfile, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+      if (userProfile) {
+        appState.setUser(userProfile)
         appState.setIsLoggedIn(true)
+        setError("")
         appState.setCurrentPage("home")
       } else {
-        setError(result.message)
+        setError("यूज़र प्रोफाइल नहीं मिली")
       }
     } catch (error) {
       setError("लॉगिन में त्रुटि हुई")
@@ -49,7 +66,7 @@ export default function LoginPage(appState: AppState) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-100 relative overflow-hidden">
-      <Navbar {...appState} />
+      <Navbar />
       <div className="container-responsive py-8 flex items-center justify-center min-h-[80vh] relative">
         <Card className="w-full max-w-md shadow-2xl rounded-3xl border-0 bg-gradient-to-br from-white/90 via-indigo-50/90 to-purple-50/90 backdrop-blur-xl border border-white/20 hover:shadow-3xl transition-all duration-500">
           <CardHeader className="bg-gradient-to-r from-slate-700 via-indigo-600 to-purple-600 text-white rounded-t-3xl relative">
