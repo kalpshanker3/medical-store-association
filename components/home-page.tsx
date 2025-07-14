@@ -66,51 +66,7 @@ export default function HomePage(appState: AppState) {
     return () => clearInterval(refreshTimer)
   }, [])
 
-  // Test database connection
-  const testDatabaseConnection = async () => {
-    try {
-      console.log("Testing database connection...")
-      
-      // Debug environment variables
-      console.log("Environment check:")
-      console.log("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "Present" : "Missing")
-      console.log("medo_NEXT_PUBLIC_SUPABASE_URL:", process.env.medo_NEXT_PUBLIC_SUPABASE_URL ? "Present" : "Missing")
-      console.log("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
-      console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
-      
-      // Test basic connection first
-      const { data: healthData, error: healthError } = await supabase.from("users").select("count").limit(1)
-      
-      if (healthError) {
-        console.error("Health check failed:", healthError)
-        
-        // Try a simpler test
-        const { data: simpleData, error: simpleError } = await supabase.rpc('version')
-        
-        if (simpleError) {
-          console.error("Simple test also failed:", simpleError)
-          alert(`डेटाबेस कनेक्शन त्रुटि: ${simpleError.message}\n\nकृपया इंटरनेट कनेक्शन चेक करें।`)
-        } else {
-          console.log("Simple connection successful:", simpleData)
-          alert("✅ बेसिक कनेक्शन सफल!")
-        }
-      } else {
-        console.log("Database connection successful:", healthData)
-        alert("✅ डेटाबेस कनेक्शन सफल!")
-      }
-    } catch (error: any) {
-      console.error("Database test error:", error)
-      
-      if (error.message?.includes('fetch')) {
-        alert("🌐 नेटवर्क त्रुटि: कृपया इंटरनेट कनेक्शन चेक करें")
-      } else if (error.message?.includes('CORS')) {
-        alert("🔒 CORS त्रुटि: ब्राउज़र सेटिंग्स चेक करें")
-      } else {
-        alert(`डेटाबेस टेस्ट में त्रुटि: ${error.message}`)
-      }
-    }
-  }
-
+  // Remove any code that checks or displays database connection status, alerts, or debug info
 
 
   return (
@@ -144,40 +100,6 @@ export default function HomePage(appState: AppState) {
                   <Heart className="h-6 w-6 text-red-500 animate-pulse drop-shadow-sm" />
                   <span className="font-semibold text-center sm:text-left">सहयोग • भाईचारा • एकजुटता</span>
                 </div>
-                
-                {/* Database Test Button */}
-                <Button
-                  onClick={testDatabaseConnection}
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                >
-                  <Database className="h-5 w-5 mr-2" />
-                  डेटाबेस टेस्ट करें
-                </Button>
-                
-                {/* Environment Debug Button */}
-                <Button
-                  onClick={() => {
-                    console.log("=== Vercel Environment Debug ===")
-                    console.log("medo_NEXT_PUBLIC_SUPABASE_URL:", process.env.medo_NEXT_PUBLIC_SUPABASE_URL)
-                    console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
-                    console.log("medo_SUPABASE_URL:", process.env.medo_SUPABASE_URL)
-                    console.log("medo_SUPABASE_SERVICE_ROLE_KEY:", process.env.medo_SUPABASE_SERVICE_ROLE_KEY ? "Present" : "Missing")
-                    console.log("medo_POSTGRES_URL:", process.env.medo_POSTGRES_URL ? "Present" : "Missing")
-                    
-                    // Test connection
-                    testSupabaseConnection().then(result => {
-                      console.log("Connection test result:", result)
-                      if (result.connected) {
-                        alert("✅ Vercel से connection successful! Check console for details.")
-                      } else {
-                        alert("❌ Connection failed: " + result.error + "\n\nCheck console for details.")
-                      }
-                    })
-                  }}
-                  className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                >
-                  🔧 Vercel Environment Check
-                </Button>
                 
                 {/* Connection Status */}
                 <div className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-blue-100">

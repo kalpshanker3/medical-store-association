@@ -168,15 +168,6 @@ export default function LoginPage(appState: AppState) {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
-
-              {/* Admin Login Info */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-800 mb-2">👨‍💼 Admin Login</h3>
-                <p className="text-sm text-blue-700">
-                  Phone: <strong>9936460026</strong><br />
-                  Password: <strong>Kiddo#17</strong>
-                </p>
-              </div>
             </form>
           </CardContent>
         </Card>

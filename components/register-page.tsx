@@ -153,14 +153,14 @@ export default function RegisterPage(appState: AppState) {
       <Navbar {...appState} />
 
       <div className="container-responsive py-4 sm:py-6 lg:py-8">
-        <Card className="max-w-4xl mx-auto shadow-2xl rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-white via-slate-50 to-gray-50">
+        <Card className="max-w-4xl mx-auto shadow-2xl rounded-2xl sm:rounded-3xl border-0 bg-white">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-2xl sm:rounded-t-3xl">
             <CardTitle className="text-xl sm:text-2xl font-bold text-center flex items-center justify-center gap-3">
               <UserPlus className="h-6 w-6 sm:h-8 sm:w-8" />
               नया सदस्य रजिस्ट्रेशन
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-6 text-gray-900">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Error/Success Messages */}
               {error && (

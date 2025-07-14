@@ -27,25 +27,38 @@ export default function RootLayout({
         const savedIsLoggedIn = localStorage.getItem('isLoggedIn')
         
         if (savedUser && savedIsLoggedIn === 'true') {
-          const userData = JSON.parse(savedUser)
-          setUser(userData)
-          setIsLoggedIn(true)
-          
-          // Redirect admin to admin page
-          if (userData.role === 'admin') {
-            setCurrentPage('admin')
+          let userData
+          try {
+            userData = JSON.parse(savedUser)
+            // Fallback: ensure userData has at least phone and name
+            if (!userData || !userData.phone) throw new Error('Invalid user')
+          } catch {
+            userData = null
+          }
+          if (userData) {
+            setUser(userData)
+            setIsLoggedIn(true)
+            if (userData.role === 'admin') {
+              setCurrentPage('admin')
+            }
+          } else {
+            setUser(null)
+            setIsLoggedIn(false)
+            setCurrentPage('home')
+            localStorage.removeItem('user')
+            localStorage.removeItem('isLoggedIn')
           }
         }
       } catch (error) {
-        console.error('Error loading session:', error)
-        // Clear invalid session
+        setUser(null)
+        setIsLoggedIn(false)
+        setCurrentPage('home')
         localStorage.removeItem('user')
         localStorage.removeItem('isLoggedIn')
       } finally {
         setIsLoading(false)
       }
     }
-
     loadSession()
   }, [])
 
