@@ -1,4 +1,4 @@
-import { supabase } from "./supabase"
+import { supabase, testSupabaseConnection } from "./supabase"
 import type { User } from "./supabase"
 
 // Set current user context for RLS
@@ -17,38 +17,50 @@ async function setUserContext(phone: string) {
 // Send OTP to phone number
 export async function sendOTP(phone: string): Promise<{ success: boolean; message: string }> {
   try {
-    console.log("Sending OTP to:", phone)
+    console.log("📱 Sending OTP to:", phone)
     
-    // Check if Supabase is properly configured (support both with and without medo_ prefix)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.medo_NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY
+    // Check Vercel environment variables first
+    const supabaseUrl = 
+      process.env.medo_NEXT_PUBLIC_SUPABASE_URL || 
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.VERCEL_SUPABASE_URL
     
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error("Supabase configuration missing")
-      return { success: false, message: "डेटाबेस कॉन्फ़िगरेशन त्रुटि" }
+    const supabaseAnonKey = 
+      process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.VERCEL_SUPABASE_ANON_KEY
+    
+    console.log("🔍 Environment check:")
+    console.log("medo_NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl ? "✅ Found" : "❌ Missing")
+    console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "✅ Found" : "❌ Missing")
+    
+    // First test Supabase connection
+    const { connected, error: connectionError } = await testSupabaseConnection()
+    
+    if (!connected) {
+      console.error("❌ Database not connected:", connectionError)
+      return { 
+        success: false, 
+        message: "डेटाबेस कनेक्शन त्रुटि - कृपया Vercel environment variables जांचें" 
+      }
     }
-
-    // For now, always return success without database operations
-    // This will allow the app to work while we fix the database issues
-    console.log(`OTP would be sent to ${phone} in production`)
-    console.log(`Test OTP for ${phone}: 123456`)
 
     // Check if we can reach Supabase
     try {
       const { data, error } = await supabase.from("users").select("count").limit(1)
       if (error) {
-        console.log("Database not accessible, using offline mode")
-        return { success: true, message: "OTP भेजा गया है (ऑफ़लाइन मोड)" }
+        console.log("⚠️ Database not accessible, using offline mode")
+        return { success: true, message: "OTP भेजा गया है (ऑफ़लाइन मोड) - 123456" }
       } else {
-        console.log("Database accessible")
-        return { success: true, message: "OTP भेजा गया है (टेस्ट मोड)" }
+        console.log("✅ Database accessible")
+        return { success: true, message: "OTP भेजा गया है (टेस्ट मोड) - 123456" }
       }
     } catch (error) {
-      console.log("Network error, using offline mode")
-      return { success: true, message: "OTP भेजा गया है (ऑफ़लाइन मोड)" }
+      console.log("⚠️ Network error, using offline mode")
+      return { success: true, message: "OTP भेजा गया है (ऑफ़लाइन मोड) - 123456" }
     }
   } catch (error) {
-    console.error("Error sending OTP:", error)
+    console.error("❌ Error sending OTP:", error)
     return { success: false, message: "OTP भेजने में त्रुटि" }
   }
 }
@@ -59,22 +71,48 @@ export async function verifyOTP(
   otp: string,
 ): Promise<{ success: boolean; user?: User; message: string }> {
   try {
-    console.log("Verifying OTP for:", phone, "OTP:", otp)
+    console.log("🔐 Verifying OTP for:", phone, "OTP:", otp)
+    
+    // Check Vercel environment variables
+    const supabaseUrl = 
+      process.env.medo_NEXT_PUBLIC_SUPABASE_URL || 
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.VERCEL_SUPABASE_URL
+    
+    const supabaseAnonKey = 
+      process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.VERCEL_SUPABASE_ANON_KEY
+    
+    console.log("🔍 Vercel Environment Check:")
+    console.log("medo_NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl ? "✅ Found" : "❌ Missing")
+    console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "✅ Found" : "❌ Missing")
+    
+    // First test Supabase connection
+    const { connected, error: connectionError } = await testSupabaseConnection()
+    
+    if (!connected) {
+      console.error("❌ Database not connected:", connectionError)
+      return { 
+        success: false, 
+        message: "डेटाबेस कनेक्शन त्रुटि - कृपया Vercel environment variables जांचें" 
+      }
+    }
     
     // For development purposes, accept 123456 as valid OTP
     if (otp === "123456") {
-      console.log("Test OTP accepted, checking user in database...")
+      console.log("✅ Test OTP accepted, checking user in database...")
       
       // Check if user exists
       const { data: user, error: userError } = await supabase.from("users").select("*").eq("phone", phone).single()
 
       if (userError) {
-        console.log("User not found, this is a new registration")
+        console.log("📝 User not found, this is a new registration")
         return { success: false, message: "यह फ़ोन नंबर रजिस्टर्ड नहीं है" }
       }
 
       if (user) {
-        console.log("User found:", user.name)
+        console.log("✅ User found:", user.name)
         // Set user context for RLS
         await setUserContext(phone)
         return { success: true, user, message: "सफलतापूर्वक लॉग इन हो गए" }
@@ -84,7 +122,7 @@ export async function verifyOTP(
     // For any other OTP, return error
     return { success: false, message: "गलत OTP! कृपया 123456 डालें" }
   } catch (error) {
-    console.error("Error verifying OTP:", error)
+    console.error("❌ Error verifying OTP:", error)
     return { success: false, message: "OTP सत्यापन में त्रुटि" }
   }
 }
@@ -94,6 +132,34 @@ export async function registerUser(
   userData: Partial<User>,
 ): Promise<{ success: boolean; user?: User; message: string }> {
   try {
+    console.log("📝 Registering new user:", userData.phone)
+    
+    // Check Vercel environment variables
+    const supabaseUrl = 
+      process.env.medo_NEXT_PUBLIC_SUPABASE_URL || 
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.VERCEL_SUPABASE_URL
+    
+    const supabaseAnonKey = 
+      process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.VERCEL_SUPABASE_ANON_KEY
+    
+    console.log("🔍 Vercel Environment Check for Registration:")
+    console.log("medo_NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl ? "✅ Found" : "❌ Missing")
+    console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "✅ Found" : "❌ Missing")
+    
+    // First test Supabase connection
+    const { connected, error: connectionError } = await testSupabaseConnection()
+    
+    if (!connected) {
+      console.error("❌ Database not connected:", connectionError)
+      return { 
+        success: false, 
+        message: "डेटाबेस कनेक्शन त्रुटि - कृपया Vercel environment variables जांचें" 
+      }
+    }
+
     const { data: user, error } = await supabase
       .from("users")
       .insert({
@@ -105,16 +171,20 @@ export async function registerUser(
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("❌ Registration error:", error)
+      throw error
+    }
 
     // Set user context for RLS
     if (userData.phone) {
       await setUserContext(userData.phone)
     }
 
+    console.log("✅ User registered successfully:", user.name)
     return { success: true, user, message: "रजिस्ट्रेशन सफल" }
   } catch (error) {
-    console.error("Error registering user:", error)
+    console.error("❌ Error registering user:", error)
     return { success: false, message: "रजिस्ट्रेशन में त्रुटि" }
   }
 }

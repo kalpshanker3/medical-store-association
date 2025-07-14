@@ -7,7 +7,8 @@ import { CreditCard, Sparkles, Heart, Users, Database } from "lucide-react"
 import Navbar from "./navbar"
 import type { AppState } from "../app/page"
 import { Badge } from "@/components/ui/badge"
-import { supabase } from "../lib/supabase"
+import { supabase, testSupabaseConnection } from "../lib/supabase"
+import { ConnectionStatus } from "./connection-status"
 
 
 // Gallery images will be fetched from database
@@ -156,17 +157,32 @@ export default function HomePage(appState: AppState) {
                 {/* Environment Debug Button */}
                 <Button
                   onClick={() => {
-                    console.log("=== Environment Debug ===")
-                    console.log("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
+                    console.log("=== Vercel Environment Debug ===")
                     console.log("medo_NEXT_PUBLIC_SUPABASE_URL:", process.env.medo_NEXT_PUBLIC_SUPABASE_URL)
-                    console.log("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
                     console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
-                    alert("Environment variables logged to console (F12 press karein)")
+                    console.log("medo_SUPABASE_URL:", process.env.medo_SUPABASE_URL)
+                    console.log("medo_SUPABASE_SERVICE_ROLE_KEY:", process.env.medo_SUPABASE_SERVICE_ROLE_KEY ? "Present" : "Missing")
+                    console.log("medo_POSTGRES_URL:", process.env.medo_POSTGRES_URL ? "Present" : "Missing")
+                    
+                    // Test connection
+                    testSupabaseConnection().then(result => {
+                      console.log("Connection test result:", result)
+                      if (result.connected) {
+                        alert("✅ Vercel से connection successful! Check console for details.")
+                      } else {
+                        alert("❌ Connection failed: " + result.error + "\n\nCheck console for details.")
+                      }
+                    })
                   }}
                   className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
                 >
-                  🔧 Environment Check
+                  🔧 Vercel Environment Check
                 </Button>
+                
+                {/* Connection Status */}
+                <div className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-blue-100">
+                  <ConnectionStatus />
+                </div>
                 
 
               </div>

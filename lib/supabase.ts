@@ -1,16 +1,38 @@
 import { createClient } from "@supabase/supabase-js"
 
-// Support both with and without medo_ prefix
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.medo_NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Support multiple environment variable sources
+const supabaseUrl = 
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 
+  process.env.medo_NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.VERCEL_SUPABASE_URL ||
+  process.env.SUPABASE_URL
+
+const supabaseAnonKey = 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+  process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.VERCEL_SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_ANON_KEY
 
 // Check if environment variables are available
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("Supabase environment variables are missing!")
-  console.error("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
-  console.error("medo_NEXT_PUBLIC_SUPABASE_URL:", process.env.medo_NEXT_PUBLIC_SUPABASE_URL)
-  console.error("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
-  console.error("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing")
+  console.error("❌ Supabase environment variables are missing!")
+  console.error("Checking all possible sources:")
+  console.error("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "✅ Present" : "❌ Missing")
+  console.error("medo_NEXT_PUBLIC_SUPABASE_URL:", process.env.medo_NEXT_PUBLIC_SUPABASE_URL ? "✅ Present" : "❌ Missing")
+  console.error("VERCEL_SUPABASE_URL:", process.env.VERCEL_SUPABASE_URL ? "✅ Present" : "❌ Missing")
+  console.error("SUPABASE_URL:", process.env.SUPABASE_URL ? "✅ Present" : "❌ Missing")
+  console.error("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✅ Present" : "❌ Missing")
+  console.error("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✅ Present" : "❌ Missing")
+  console.error("VERCEL_SUPABASE_ANON_KEY:", process.env.VERCEL_SUPABASE_ANON_KEY ? "✅ Present" : "❌ Missing")
+  console.error("SUPABASE_ANON_KEY:", process.env.SUPABASE_ANON_KEY ? "✅ Present" : "❌ Missing")
+  console.error("📝 Please check Vercel environment variables or create .env.local file")
+} else {
+  console.log("✅ Supabase environment variables found!")
+  console.log("Source:", 
+    process.env.VERCEL_SUPABASE_URL ? "Vercel" : 
+    process.env.NEXT_PUBLIC_SUPABASE_URL ? "Local" : 
+    "Other"
+  )
 }
 
 // Create Supabase client with fallback values to prevent crashes
@@ -35,6 +57,37 @@ export const supabase = createClient(
     }
   }
 )
+
+// Test connection function
+export async function testSupabaseConnection(): Promise<{ connected: boolean; error?: string }> {
+  try {
+    // Test basic connection
+    const { data, error } = await supabase.from("users").select("count").limit(1)
+    
+    if (error) {
+      console.error("❌ Supabase connection failed:", error.message)
+      return { connected: false, error: error.message }
+    }
+    
+    console.log("✅ Supabase connection successful!")
+    return { connected: true }
+  } catch (error) {
+    console.error("❌ Supabase connection error:", error)
+    return { connected: false, error: String(error) }
+  }
+}
+
+// Initialize connection test on module load
+if (typeof window !== 'undefined') {
+  // Only run in browser
+  testSupabaseConnection().then(({ connected, error }) => {
+    if (connected) {
+      console.log("🚀 Supabase ready for use!")
+    } else {
+      console.error("⚠️ Supabase not connected:", error)
+    }
+  })
+}
 
 // Database types
 export interface User {
