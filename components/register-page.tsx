@@ -66,11 +66,18 @@ export default function RegisterPage(appState: AppState) {
     setError("")
     setSuccess("")
 
-    if (!formData.phone || formData.phone.length !== 10) {
+    // Validate all fields
+    for (const [key, value] of Object.entries(formData)) {
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        setError(`कृपया सभी फ़ील्ड भरें (${key})`)
+        return
+      }
+    }
+    if (formData.phone.length !== 10) {
       setError("कृपया 10 अंकों का सही फ़ोन नंबर डालें")
       return
     }
-    if (!formData.password || formData.password.length < 6) {
+    if (formData.password.length < 6) {
       setError("पासवर्ड कम से कम 6 अक्षर का होना चाहिए")
       return
     }
@@ -96,8 +103,8 @@ export default function RegisterPage(appState: AppState) {
         id: authData.user.id,
         name: formData.name,
         phone: formData.phone,
-        alternate_phone: formData.alternatePhone || undefined,
-        age: formData.age ? Number.parseInt(formData.age) : undefined,
+        alternate_phone: formData.alternatePhone,
+        age: Number.parseInt(formData.age),
         aadhar: formData.aadhar,
         location: formData.location,
         store_name: formData.storeName,
@@ -351,6 +358,7 @@ export default function RegisterPage(appState: AppState) {
                       दवा लाइसेंस शुरू करने का तिथि
                     </label>
                     <Input
+                      required
                       type="date"
                       value={formData.drugLicenseStartDate}
                       onChange={(e) => setFormData({ ...formData, drugLicenseStartDate: e.target.value })}
@@ -363,6 +371,7 @@ export default function RegisterPage(appState: AppState) {
                       दवा लाइसेंस समाप्त करने का तिथि
                     </label>
                     <Input
+                      required
                       type="date"
                       value={formData.drugLicenseEndDate}
                       onChange={(e) => setFormData({ ...formData, drugLicenseEndDate: e.target.value })}
@@ -391,6 +400,7 @@ export default function RegisterPage(appState: AppState) {
                       खाद्य लाइसेंस शुरू करने का तिथि
                     </label>
                     <Input
+                      required
                       type="date"
                       value={formData.foodLicenseStartDate}
                       onChange={(e) => setFormData({ ...formData, foodLicenseStartDate: e.target.value })}
@@ -403,6 +413,7 @@ export default function RegisterPage(appState: AppState) {
                       खाद्य लाइसेंस समाप्त करने का तिथि
                     </label>
                     <Input
+                      required
                       type="date"
                       value={formData.foodLicenseEndDate}
                       onChange={(e) => setFormData({ ...formData, foodLicenseEndDate: e.target.value })}
