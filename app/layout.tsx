@@ -33,8 +33,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   // Sync with Supabase session on mount
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
     const checkSession = async () => {
       try {
+        // Set a timeout to avoid infinite loading
+        timeoutId = setTimeout(() => {
+          setIsLoading(false)
+          setUser(null)
+          setIsLoggedIn(false)
+          localStorage.removeItem('user')
+          localStorage.removeItem('isLoggedIn')
+        }, 10000) // 10 seconds
         const { data, error } = await supabase.auth.getSession()
         if (data?.session && data.session.user) {
           // Fetch user profile from DB
@@ -49,7 +58,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             localStorage.setItem('user', JSON.stringify(userProfile))
             localStorage.setItem('isLoggedIn', 'true')
           } else {
-            console.warn('Supabase session found but user profile missing, logging out.')
             setUser(null)
             setIsLoggedIn(false)
             localStorage.removeItem('user')
@@ -62,12 +70,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           localStorage.removeItem('isLoggedIn')
         }
       } catch (err) {
-        console.error('Error restoring session:', err)
         setUser(null)
         setIsLoggedIn(false)
         localStorage.removeItem('user')
         localStorage.removeItem('isLoggedIn')
       }
+      if (timeoutId) clearTimeout(timeoutId)
       setIsLoading(false)
     }
     checkSession()
@@ -86,7 +94,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             localStorage.setItem('user', JSON.stringify(userProfile))
             localStorage.setItem('isLoggedIn', 'true')
           } else {
-            console.warn('Supabase session found but user profile missing, logging out.')
             setUser(null)
             setIsLoggedIn(false)
             localStorage.removeItem('user')
@@ -99,7 +106,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           localStorage.removeItem('isLoggedIn')
         }
       } catch (err) {
-        console.error('Error in auth state change:', err)
         setUser(null)
         setIsLoggedIn(false)
         localStorage.removeItem('user')
@@ -108,6 +114,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     })
     return () => {
       listener?.subscription.unsubscribe()
+      if (timeoutId) clearTimeout(timeoutId)
     }
   }, [])
 
@@ -139,6 +146,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p className="text-gray-600">लोड हो रहा है...</p>
+                <p className="text-red-600 mt-4">अगर यह स्क्रीन 10 सेकंड से ज़्यादा दिखे, कृपया पेज रीफ्रेश करें या लॉगिन करें।</p>
               </div>
             </div>
           </ThemeProvider>
