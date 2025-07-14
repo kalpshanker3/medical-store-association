@@ -1,206 +1,138 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import HomePage from "../components/home-page"
-import RegisterPage from "../components/register-page"
-import StatusPage from "../components/status-page"
-import GroupsPage from "../components/groups-page"
-import DonatePage from "../components/donate-page"
-import ContactPage from "../components/contact-page"
-import GalleryPage from "../components/gallery-page"
-import FAQPage from "../components/faq-page"
-import PaymentHistoryPage from "../components/payment-history-page"
-import MembershipPaymentPage from "../components/membership-payment-page"
-import AdminPage from "../components/admin-page"
-import LoginPage from "../components/login-page"
-import NotificationsPage from "../components/notifications-page"
-import { ErrorBoundary } from "../components/error-boundary"
-
-export type Page =
-  | "home"
-  | "register"
-  | "login"
-  | "status"
-  | "groups"
-  | "donate"
-  | "contact"
-  | "gallery"
-  | "faq"
-  | "payment-history"
-  | "membership-payment"
-  | "admin"
-  | "notifications"
-
-export interface AssociationUser {
-  name: string
-  phone: string
-  alternatePhone?: string
-  aadhar: string
-  storeName: string
-  location: string
-  gstNumber: string
-  drugLicenseNumber: string
-  drugLicenseStartDate: string
-  drugLicenseEndDate: string
-  foodLicenseNumber: string
-  foodLicenseStartDate: string
-  foodLicenseEndDate: string
-  age: string
-  accountNumber: string
-  ifsc: string
-  branch: string
-  // Nominee Information
-  nomineeName?: string
-  nomineeRelation?: string
-  customNomineeRelation?: string // Add this line
-  nomineePhone?: string
-  nomineeAccountNumber?: string
-  nomineeIfsc?: string
-  nomineeBranch?: string
-  status: "प्रगति में है" | "स्वीकृत"
-  membershipStatus?: "active" | "pending"
-  role?: "user" | "admin"
-}
+import { supabase } from "@/lib/supabase"
+import type { User } from "@/lib/supabase"
+import HomePage from "@/components/home-page"
+import LoginPage from "@/components/login-page"
+import RegisterPage from "@/components/register-page"
+import AdminPage from "@/components/admin-page"
+import ContactPage from "@/components/contact-page"
+import DonatePage from "@/components/donate-page"
+import FaqPage from "@/components/faq-page"
+import GalleryPage from "@/components/gallery-page"
+import GroupsPage from "@/components/groups-page"
+import MembershipPaymentPage from "@/components/membership-payment-page"
+import NotificationsPage from "@/components/notifications-page"
+import PaymentHistoryPage from "@/components/payment-history-page"
+import StatusPage from "@/components/status-page"
 
 export interface AppState {
-  currentPage: Page
+  currentPage: string
+  setCurrentPage: (page: string) => void
   isLoggedIn: boolean
-  user: AssociationUser | null
-  setCurrentPage: (page: Page) => void
   setIsLoggedIn: (loggedIn: boolean) => void
-  setUser: (user: AssociationUser | null) => void
+  user: User | null
+  setUser: (user: User | null) => void
+  logout: () => void
 }
 
-export default function MedicalStoreAssociation() {
-  const [currentPage, setCurrentPageState] = useState<Page>("home")
+export default function App() {
+  const [currentPage, setCurrentPage] = useState("home")
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [user, setUser] = useState<AssociationUser | null>(null)
-  const [pageHistory, setPageHistory] = useState<Page[]>(["home"])
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Custom setCurrentPage function with history management and scroll to top
-  const setCurrentPage = (page: Page) => {
-    // Scroll to top when changing pages
-    window.scrollTo({ top: 0, behavior: "smooth" })
-
-    // Add to history if it's a different page
-    if (page !== currentPage) {
-      setPageHistory((prev) => [...prev, page])
-      // Update browser history
-      window.history.pushState({ page }, "", `#${page}`)
-    }
-    setCurrentPageState(page)
-  }
-
-  // Handle browser back button
+  // Load session from localStorage on mount
   useEffect(() => {
-    const handlePopState = (event: PopStateEvent) => {
-      // Scroll to top when using back button
-      window.scrollTo({ top: 0, behavior: "smooth" })
-
-      if (pageHistory.length > 1) {
-        // Remove current page from history
-        const newHistory = [...pageHistory]
-        newHistory.pop()
-
-        // Get previous page
-        const previousPage = newHistory[newHistory.length - 1] || "home"
-
-        setPageHistory(newHistory)
-        setCurrentPageState(previousPage)
-      } else {
-        // If no history, go to home
-        setCurrentPageState("home")
-        setPageHistory(["home"])
+    const loadSession = () => {
+      try {
+        const savedUser = localStorage.getItem('user')
+        const savedIsLoggedIn = localStorage.getItem('isLoggedIn')
+        
+        if (savedUser && savedIsLoggedIn === 'true') {
+          const userData = JSON.parse(savedUser)
+          setUser(userData)
+          setIsLoggedIn(true)
+          
+          // Redirect admin to admin page
+          if (userData.role === 'admin') {
+            setCurrentPage('admin')
+          }
+        }
+      } catch (error) {
+        console.error('Error loading session:', error)
+        // Clear invalid session
+        localStorage.removeItem('user')
+        localStorage.removeItem('isLoggedIn')
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    // Listen for back button
-    window.addEventListener("popstate", handlePopState)
-
-    // Set initial state
-    window.history.replaceState({ page: currentPage }, "", `#${currentPage}`)
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState)
-    }
-  }, [pageHistory, currentPage])
-
-  // Initialize page from URL hash on load and scroll to top
-  useEffect(() => {
-    // Scroll to top on initial load
-    window.scrollTo({ top: 0, behavior: "auto" })
-
-    const hash = window.location.hash.slice(1) as Page
-    const validPages: Page[] = [
-      "home",
-      "register",
-      "login",
-      "status",
-      "groups",
-      "donate",
-      "contact",
-      "gallery",
-      "faq",
-      "payment-history",
-      "membership-payment",
-      "admin",
-      "notifications",
-    ]
-
-    if (hash && validPages.includes(hash)) {
-      setCurrentPageState(hash)
-      setPageHistory([hash])
-    }
+    loadSession()
   }, [])
 
-  // Scroll to top whenever currentPage changes
+  // Save session to localStorage when user state changes
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }, [currentPage])
+    if (user && isLoggedIn) {
+      localStorage.setItem('user', JSON.stringify(user))
+      localStorage.setItem('isLoggedIn', 'true')
+    } else {
+      localStorage.removeItem('user')
+      localStorage.removeItem('isLoggedIn')
+    }
+  }, [user, isLoggedIn])
+
+  // Logout function
+  const logout = () => {
+    setUser(null)
+    setIsLoggedIn(false)
+    setCurrentPage("home")
+    localStorage.removeItem('user')
+    localStorage.removeItem('isLoggedIn')
+  }
 
   const appState: AppState = {
     currentPage,
-    isLoggedIn,
-    user,
     setCurrentPage,
+    isLoggedIn,
     setIsLoggedIn,
+    user,
     setUser,
+    logout,
   }
 
-  const renderCurrentPage = () => {
-    switch (currentPage) {
-      case "register":
-        return <RegisterPage {...appState} />
-      case "login":
-        return <LoginPage {...appState} />
-      case "status":
-        return <StatusPage {...appState} />
-      case "groups":
-        return <GroupsPage {...appState} />
-      case "donate":
-        return <DonatePage {...appState} />
-      case "contact":
-        return <ContactPage {...appState} />
-      case "gallery":
-        return <GalleryPage {...appState} />
-      case "faq":
-        return <FAQPage {...appState} />
-      case "payment-history":
-        return <PaymentHistoryPage {...appState} />
-      case "membership-payment":
-        return <MembershipPaymentPage {...appState} />
-      case "admin":
-        return <AdminPage {...appState} />
-      case "notifications":
-        return <NotificationsPage {...appState} />
-      default:
-        return <HomePage {...appState} />
-    }
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">लोड हो रहा है...</p>
+        </div>
+      </div>
+    )
   }
 
-  return (
-    <ErrorBoundary>
-      <div className="font-sans">{renderCurrentPage()}</div>
-    </ErrorBoundary>
-  )
+  // Render page based on currentPage state
+  switch (currentPage) {
+    case "home":
+      return <HomePage {...appState} />
+    case "login":
+      return <LoginPage {...appState} />
+    case "register":
+      return <RegisterPage {...appState} />
+    case "admin":
+      return <AdminPage {...appState} />
+    case "contact":
+      return <ContactPage {...appState} />
+    case "donate":
+      return <DonatePage {...appState} />
+    case "faq":
+      return <FaqPage {...appState} />
+    case "gallery":
+      return <GalleryPage {...appState} />
+    case "groups":
+      return <GroupsPage {...appState} />
+    case "membership-payment":
+      return <MembershipPaymentPage {...appState} />
+    case "notifications":
+      return <NotificationsPage {...appState} />
+    case "payment-history":
+      return <PaymentHistoryPage {...appState} />
+    case "status":
+      return <StatusPage {...appState} />
+    default:
+      return <HomePage {...appState} />
+  }
 }

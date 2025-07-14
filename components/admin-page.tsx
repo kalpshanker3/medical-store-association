@@ -205,6 +205,23 @@ export default function AdminPage(appState: AppState) {
           console.log("✅ Donation approved")
           fetchAllData() // Refresh data
         }
+      } else if (type === 'user') {
+        const { error } = await supabase
+          .from('users')
+          .update({ 
+            status: 'approved',
+            approved_by: appState.user?.id,
+            approved_at: new Date().toISOString()
+          })
+          .eq('id', id)
+
+        if (error) {
+          console.error("❌ Error approving user:", error)
+          alert("User approval failed")
+        } else {
+          console.log("✅ User approved")
+          fetchAllData() // Refresh data
+        }
       }
     } catch (error) {
       console.error("❌ Error in handleApprove:", error)
@@ -239,6 +256,19 @@ export default function AdminPage(appState: AppState) {
           alert("Rejection failed")
         } else {
           console.log("✅ Donation rejected")
+          fetchAllData() // Refresh data
+        }
+      } else if (type === 'user') {
+        const { error } = await supabase
+          .from('users')
+          .update({ status: 'rejected' })
+          .eq('id', id)
+
+        if (error) {
+          console.error("❌ Error rejecting user:", error)
+          alert("User rejection failed")
+        } else {
+          console.log("✅ User rejected")
           fetchAllData() // Refresh data
         }
       }

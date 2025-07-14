@@ -1,5 +1,6 @@
 import { supabase, testSupabaseConnection } from "./supabase"
 import type { User } from "./supabase"
+import bcrypt from "bcrypt"
 
 // Set current user context for RLS
 async function setUserContext(phone: string) {
@@ -14,145 +15,24 @@ async function setUserContext(phone: string) {
   }
 }
 
-// Generate random 6-digit OTP
-function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
+// Hash password using bcrypt
+async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 10
+  return await bcrypt.hash(password, saltRounds)
 }
 
-// Send SMS via Twilio
-async function sendSMS(phone: string, message: string): Promise<boolean> {
-  try {
-    const accountSid = process.env.TWILIO_ACCOUNT_SID || process.env.medo_TWILIO_ACCOUNT_SID
-    const authToken = process.env.TWILIO_AUTH_TOKEN || process.env.medo_TWILIO_AUTH_TOKEN
-    const twilioPhone = process.env.TWILIO_PHONE_NUMBER || process.env.medo_TWILIO_PHONE_NUMBER
-
-    if (!accountSid || !authToken || !twilioPhone) {
-      console.error("❌ Twilio credentials missing")
-      return false
-    }
-
-    // For now, we'll simulate SMS sending
-    // In production, you would use Twilio's API
-    console.log("📱 Twilio SMS would be sent:")
-    console.log("To:", phone)
-    console.log("From:", twilioPhone)
-    console.log("Message:", message)
-    
-    // Simulate API call
-    const response = await fetch('/api/send-sms', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: phone,
-        message: message
-      })
-    })
-
-    if (response.ok) {
-      console.log("✅ SMS sent successfully via Twilio")
-      return true
-    } else {
-      console.error("❌ SMS sending failed")
-      return false
-    }
-  } catch (error) {
-    console.error("❌ Error sending SMS:", error)
-    return false
-  }
+// Verify password using bcrypt
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return await bcrypt.compare(password, hash)
 }
 
-// Send OTP to phone number
-export async function sendOTP(phone: string): Promise<{ success: boolean; message: string }> {
-  try {
-    console.log("📱 Sending OTP to:", phone)
-    
-    // Check Vercel environment variables first
-    const supabaseUrl = 
-      process.env.medo_NEXT_PUBLIC_SUPABASE_URL || 
-      process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      process.env.VERCEL_SUPABASE_URL
-    
-    const supabaseAnonKey = 
-      process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY || 
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.VERCEL_SUPABASE_ANON_KEY
-    
-    console.log("🔍 Environment check:")
-    console.log("medo_NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl ? "✅ Found" : "❌ Missing")
-    console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "✅ Found" : "❌ Missing")
-    
-    // Check Twilio credentials
-    const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID || process.env.medo_TWILIO_ACCOUNT_SID
-    const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN || process.env.medo_TWILIO_AUTH_TOKEN
-    const twilioPhone = process.env.TWILIO_PHONE_NUMBER || process.env.medo_TWILIO_PHONE_NUMBER
-    
-    console.log("🔍 Twilio check:")
-    console.log("TWILIO_ACCOUNT_SID:", twilioAccountSid ? "✅ Found" : "❌ Missing")
-    console.log("TWILIO_AUTH_TOKEN:", twilioAuthToken ? "✅ Found" : "❌ Missing")
-    console.log("TWILIO_PHONE_NUMBER:", twilioPhone ? "✅ Found" : "❌ Missing")
-    
-    // First test Supabase connection
-    const { connected, error: connectionError } = await testSupabaseConnection()
-    
-    if (!connected) {
-      console.error("❌ Database not connected:", connectionError)
-      return { 
-        success: false, 
-        message: "डेटाबेस कनेक्शन त्रुटि - कृपया Vercel environment variables जांचें" 
-      }
-    }
-
-    // Generate OTP
-    const otp = generateOTP()
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes from now
-    
-    console.log("🔐 Generated OTP:", otp, "Expires at:", expiresAt)
-
-    // Save OTP to database
-    const { error: otpError } = await supabase
-      .from('otp_verifications')
-      .insert({
-        phone,
-        otp,
-        expires_at: expiresAt.toISOString(),
-        verified: false
-      })
-
-    if (otpError) {
-      console.error("❌ Failed to save OTP:", otpError)
-      return { success: false, message: "OTP सेव करने में त्रुटि" }
-    }
-
-    // Send SMS via Twilio
-    const smsMessage = `आपका OTP है: ${otp}\n\nयह OTP 5 मिनट के लिए वैध है।\n\nMedical Store Association`
-    const smsSent = await sendSMS(phone, smsMessage)
-
-    if (smsSent) {
-      console.log("✅ SMS sent successfully via Twilio")
-      return { success: true, message: "OTP SMS भेजा गया है" }
-    } else {
-      console.log("⚠️ SMS failed, showing OTP in console for development")
-      // For development, show OTP in alert
-      if (typeof window !== 'undefined') {
-        alert(`📱 OTP भेजा गया: ${otp}\n\nTwilio से SMS भेजने में त्रुटि। Production में यह ठीक काम करेगा।`)
-      }
-      return { success: true, message: `OTP भेजा गया है: ${otp} (Development Mode)` }
-    }
-  } catch (error) {
-    console.error("❌ Error sending OTP:", error)
-    return { success: false, message: "OTP भेजने में त्रुटि" }
-  }
-}
-
-// Verify OTP and login user
-export async function verifyOTP(
+// Login user with phone and password
+export async function loginUser(
   phone: string,
-  otp: string,
+  password: string,
 ): Promise<{ success: boolean; user?: User; message: string }> {
   try {
-    console.log("🔐 Verifying OTP for:", phone, "OTP:", otp)
+    console.log("🔐 Logging in user:", phone)
     
     // Check Vercel environment variables
     const supabaseUrl = 
@@ -180,60 +60,49 @@ export async function verifyOTP(
       }
     }
     
-    // Check if OTP exists and is valid
-    const { data: otpData, error: otpError } = await supabase
-      .from('otp_verifications')
+    // Find user by phone number
+    const { data: user, error: userError } = await supabase
+      .from('users')
       .select('*')
       .eq('phone', phone)
-      .eq('otp', otp)
-      .eq('verified', false)
-      .gte('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1)
       .single()
 
-    if (otpError || !otpData) {
-      console.log("❌ Invalid or expired OTP")
-      return { success: false, message: "गलत या समाप्त OTP" }
+    if (userError || !user) {
+      console.log("❌ User not found:", phone)
+      return { success: false, message: "फोन नंबर या पासवर्ड गलत है" }
     }
 
-    // Mark OTP as verified
-    await supabase
-      .from('otp_verifications')
-      .update({ verified: true })
-      .eq('id', otpData.id)
+    // Check if user is approved
+    if (user.status !== 'active' && user.status !== 'approved') {
+      console.log("❌ User not approved:", user.status)
+      return { success: false, message: "आपका अकाउंट अभी स्वीकृत नहीं हुआ है" }
+    }
 
-    console.log("✅ OTP verified successfully")
+    // Verify password
+    if (!user.password_hash) {
+      console.log("❌ No password hash found")
+      return { success: false, message: "पासवर्ड सेट नहीं है" }
+    }
+
+    const isPasswordValid = await verifyPassword(password, user.password_hash)
     
-    // Check if user exists
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("phone", phone)
-      .single()
-
-    if (userError) {
-      console.log("📝 User not found, this is a new registration")
-      return { success: false, message: "यह फ़ोन नंबर रजिस्टर्ड नहीं है" }
+    if (!isPasswordValid) {
+      console.log("❌ Invalid password")
+      return { success: false, message: "फोन नंबर या पासवर्ड गलत है" }
     }
 
-    if (user) {
-      console.log("✅ User found:", user.name)
-      // Set user context for RLS
-      await setUserContext(phone)
-      return { success: true, user, message: "सफलतापूर्वक लॉग इन हो गए" }
-    }
+    console.log("✅ Login successful for user:", user.name)
+    return { success: true, user, message: "लॉगिन सफल" }
 
-    return { success: false, message: "उपयोगकर्ता नहीं मिला" }
   } catch (error) {
-    console.error("❌ Error verifying OTP:", error)
-    return { success: false, message: "OTP सत्यापन में त्रुटि" }
+    console.error("❌ Error in loginUser:", error)
+    return { success: false, message: "लॉगिन में त्रुटि हुई" }
   }
 }
 
-// Register new user
+// Register new user with password
 export async function registerUser(
-  userData: Partial<User>,
+  userData: Partial<User> & { password: string },
 ): Promise<{ success: boolean; user?: User; message: string }> {
   try {
     console.log("📝 Registering new user:", userData.phone)
@@ -249,7 +118,7 @@ export async function registerUser(
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
       process.env.VERCEL_SUPABASE_ANON_KEY
     
-    console.log("🔍 Vercel Environment Check for Registration:")
+    console.log("🔍 Vercel Environment Check:")
     console.log("medo_NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl ? "✅ Found" : "❌ Missing")
     console.log("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "✅ Found" : "❌ Missing")
     
@@ -264,40 +133,84 @@ export async function registerUser(
       }
     }
 
-    const { data: user, error } = await supabase
-      .from("users")
-      .insert({
-        ...userData,
-        status: "pending",
-        membership_status: "pending",
-        role: "user",
-      })
+    // Check if user already exists
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('phone', userData.phone)
+      .single()
+
+    if (existingUser) {
+      console.log("❌ User already exists:", userData.phone)
+      return { success: false, message: "यह फोन नंबर पहले से रजिस्टर्ड है" }
+    }
+
+    // Hash password
+    const passwordHash = await hashPassword(userData.password)
+    
+    // Prepare user data for insertion
+    const newUserData = {
+      name: userData.name,
+      phone: userData.phone,
+      password_hash: passwordHash,
+      store_name: userData.store_name,
+      location: userData.location,
+      aadhar: userData.aadhar,
+      gst_number: userData.gst_number,
+      drug_license_number: userData.drug_license_number,
+      food_license_number: userData.food_license_number,
+      account_number: userData.account_number,
+      ifsc: userData.ifsc,
+      branch: userData.branch,
+      nominee_name: userData.nominee_name,
+      nominee_relation: userData.nominee_relation,
+      nominee_phone: userData.nominee_phone,
+      nominee_account_number: userData.nominee_account_number,
+      nominee_ifsc: userData.nominee_ifsc,
+      nominee_branch: userData.nominee_branch,
+      role: 'user',
+      status: 'pending',
+    }
+
+    // Insert new user
+    const { data: newUser, error: insertError } = await supabase
+      .from('users')
+      .insert(newUserData)
       .select()
       .single()
 
-    if (error) {
-      console.error("❌ Registration error:", error)
-      throw error
+    if (insertError) {
+      console.error("❌ Failed to insert user:", insertError)
+      return { success: false, message: "रजिस्ट्रेशन में त्रुटि हुई" }
     }
 
-    // Set user context for RLS
-    if (userData.phone) {
-      await setUserContext(userData.phone)
+    console.log("✅ User registered successfully:", newUser.name)
+    return { 
+      success: true, 
+      user: newUser, 
+      message: "रजिस्ट्रेशन सफल! कृपया प्रशासक से अनुमति लें।" 
     }
 
-    console.log("✅ User registered successfully:", user.name)
-    return { success: true, user, message: "रजिस्ट्रेशन सफल" }
   } catch (error) {
-    console.error("❌ Error registering user:", error)
-    return { success: false, message: "रजिस्ट्रेशन में त्रुटि" }
+    console.error("❌ Error in registerUser:", error)
+    return { success: false, message: "रजिस्ट्रेशन में त्रुटि हुई" }
   }
 }
 
-// Clean expired OTPs (utility function)
+// Clean expired OTPs (keeping for compatibility)
 export async function cleanExpiredOTPs(): Promise<void> {
   try {
-    await supabase.rpc("clean_expired_otps")
+    const { error } = await supabase
+      .from('otp_verifications')
+      .delete()
+      .lt('expires_at', new Date().toISOString())
+
+    if (error) {
+      console.error("Error cleaning expired OTPs:", error)
+    } else {
+      console.log("Expired OTPs cleaned successfully")
+    }
   } catch (error) {
-    console.error("Error cleaning expired OTPs:", error)
+    console.error("Error in cleanExpiredOTPs:", error)
   }
 }

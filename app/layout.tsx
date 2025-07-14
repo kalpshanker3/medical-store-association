@@ -1,28 +1,20 @@
-import type React from "react"
+"use client"
+
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+import { useState, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
+import type { User } from "@/lib/supabase"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "फ��टकर दवा व्यापार मंडल",
-  description: "Medical Store Owners Association - Supporting families and building community",
-  keywords: "medical store, pharmacy, association, support, community",
-  authors: [{ name: "Medical Store Association" }],
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
-  themeColor: "#6366f1",
-  manifest: "/manifest.json",
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
-  },
-    generator: 'v0.dev'
+  title: "Medical Store Association",
+  description: "Medical Store Association Management System",
+  viewport: "width=device-width, initial-scale=1",
+  themeColor: "#3b82f6",
 }
 
 export default function RootLayout({
@@ -30,20 +22,104 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const [currentPage, setCurrentPage] = useState("home")
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Load session from localStorage on mount
+  useEffect(() => {
+    const loadSession = () => {
+      try {
+        const savedUser = localStorage.getItem('user')
+        const savedIsLoggedIn = localStorage.getItem('isLoggedIn')
+        
+        if (savedUser && savedIsLoggedIn === 'true') {
+          const userData = JSON.parse(savedUser)
+          setUser(userData)
+          setIsLoggedIn(true)
+          
+          // Redirect admin to admin page
+          if (userData.role === 'admin') {
+            setCurrentPage('admin')
+          }
+        }
+      } catch (error) {
+        console.error('Error loading session:', error)
+        // Clear invalid session
+        localStorage.removeItem('user')
+        localStorage.removeItem('isLoggedIn')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadSession()
+  }, [])
+
+  // Save session to localStorage when user state changes
+  useEffect(() => {
+    if (user && isLoggedIn) {
+      localStorage.setItem('user', JSON.stringify(user))
+      localStorage.setItem('isLoggedIn', 'true')
+    } else {
+      localStorage.removeItem('user')
+      localStorage.removeItem('isLoggedIn')
+    }
+  }, [user, isLoggedIn])
+
+  // Logout function
+  const logout = () => {
+    setUser(null)
+    setIsLoggedIn(false)
+    setCurrentPage("home")
+    localStorage.removeItem('user')
+    localStorage.removeItem('isLoggedIn')
+  }
+
+  const appState = {
+    currentPage,
+    setCurrentPage,
+    isLoggedIn,
+    setIsLoggedIn,
+    user,
+    setUser,
+    logout,
+  }
+
+  if (isLoading) {
+    return (
+      <html lang="en">
+        <body className={inter.className}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">लोड हो रहा है...</p>
+              </div>
+            </div>
+          </ThemeProvider>
+        </body>
+      </html>
+    )
+  }
+
   return (
-    <html lang="hi" className="scroll-smooth">
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
-        <meta name="format-detection" content="telephone=yes" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="दवा व्यापार मंडल" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
-      <body className={`${inter.className} antialiased`}>
-        <div className="min-h-screen bg-gray-50">{children}</div>
+    <html lang="en">
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )
