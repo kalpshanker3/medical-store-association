@@ -9,7 +9,7 @@ import { User, Phone, Shield, CheckCircle, Eye, EyeOff } from "lucide-react"
 import Navbar from "./navbar"
 import type { AppState } from "../lib/types"
 import { loginUser } from "../lib/auth"
-// import { supabase } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase"
 
 export default function LoginPage(appState: AppState) {
   const [formData, setFormData] = useState({
@@ -33,15 +33,30 @@ export default function LoginPage(appState: AppState) {
     }
     setIsLoading(true)
     try {
-      // Use custom loginUser API (phone/password)
-      const result = await loginUser(formData.phone, formData.password)
-      if (result.success && result.user) {
-        appState.setUser(result.user)
+      // Use phone as email for Supabase Auth
+      const email = formData.phone + "@example.com"
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password: formData.password
+      })
+      if (authError || !data.session) {
+        setError("फोन नंबर या पासवर्ड गलत है")
+        setIsLoading(false)
+        return
+      }
+      // Fetch user profile from DB
+      const { data: userProfile, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+      if (userProfile) {
+        appState.setUser(userProfile)
         appState.setIsLoggedIn(true)
         setError("")
         appState.setCurrentPage("status")
       } else {
-        setError(result.message)
+        setError("यूज़र प्रोफाइल नहीं मिली")
       }
     } catch (error) {
       setError("लॉगिन में त्रुटि हुई")

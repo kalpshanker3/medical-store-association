@@ -24,6 +24,7 @@ import {
 import Navbar from "./navbar"
 import type { AppState } from "../lib/types"
 import { registerUser } from "../lib/auth"
+import { supabase } from "@/lib/supabase"
 
 export default function RegisterPage(appState: AppState) {
   const [formData, setFormData] = useState({
@@ -79,7 +80,20 @@ export default function RegisterPage(appState: AppState) {
     }
     setIsLoading(true)
     try {
+      // 1. Register with Supabase Auth using phone as email
+      const email = formData.phone + "@example.com"
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password: formData.password
+      })
+      if (authError || !authData.user) {
+        setError("रजिस्ट्रेशन में त्रुटि: " + (authError?.message || ""))
+        setIsLoading(false)
+        return
+      }
+      // 2. Insert user profile in users table
       const userData = {
+        id: authData.user.id,
         name: formData.name,
         phone: formData.phone,
         alternate_phone: formData.alternatePhone || undefined,
@@ -104,17 +118,20 @@ export default function RegisterPage(appState: AppState) {
         nominee_account_number: formData.nomineeAccountNumber,
         nominee_ifsc: formData.nomineeIfsc,
         nominee_branch: formData.nomineeBranch,
-        password: formData.password,
+        status: "pending",
+        membership_status: "pending",
+        role: "user"
       }
-      const registerResult = await registerUser(userData)
-      if (registerResult.success && registerResult.user) {
-        appState.setUser(registerResult.user)
-        appState.setIsLoggedIn(true)
-        setSuccess("रजिस्ट्रेशन सफल! आपका आवेदन समीक्षा में है।")
-        appState.setCurrentPage("status")
-      } else {
-        setError(registerResult.message)
+      const { error: dbError } = await supabase.from('users').insert(userData)
+      if (dbError) {
+        setError("रजिस्ट्रेशन में त्रुटि: " + dbError.message)
+        setIsLoading(false)
+        return
       }
+      appState.setUser(userData)
+      appState.setIsLoggedIn(true)
+      setSuccess("रजिस्ट्रेशन सफल! आपका आवेदन समीक्षा में है।")
+      appState.setCurrentPage("status")
     } catch (error) {
       setError("रजिस्ट्रेशन में त्रुटि हुई")
     } finally {

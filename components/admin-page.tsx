@@ -353,27 +353,27 @@ export default function AdminPage(appState: AppState) {
             )}
             <Tabs defaultValue="membership" className="w-full">
               <TabsList className="grid w-full grid-cols-6 mb-6">
-                <TabsTrigger value="membership" className="flex items-center gap-2">
+                <TabsTrigger value="membership" className="flex items-center gap-2 text-black">
                   <CreditCard className="h-4 w-4" />
                   सदस्यता
                 </TabsTrigger>
-                <TabsTrigger value="donations" className="flex items-center gap-2">
+                <TabsTrigger value="donations" className="flex items-center gap-2 text-black">
                   <Heart className="h-4 w-4" />
                   दान
                 </TabsTrigger>
-                <TabsTrigger value="registrations" className="flex items-center gap-2">
+                <TabsTrigger value="registrations" className="flex items-center gap-2 text-black">
                   <Users className="h-4 w-4" />
                   रजिस्ट्रेशन
                 </TabsTrigger>
-                <TabsTrigger value="emergency" className="flex items-center gap-2">
+                <TabsTrigger value="emergency" className="flex items-center gap-2 text-black">
                   <AlertTriangle className="h-4 w-4" />
                   दुर्घटना
                 </TabsTrigger>
-                <TabsTrigger value="notifications" className="flex items-center gap-2">
+                <TabsTrigger value="notifications" className="flex items-center gap-2 text-black">
                   <Bell className="h-4 w-4" />
                   सूचनाएं
                 </TabsTrigger>
-                <TabsTrigger value="gallery" className="flex items-center gap-2">
+                <TabsTrigger value="gallery" className="flex items-center gap-2 text-black">
                   <Camera className="h-4 w-4" />
                   गैलरी
                 </TabsTrigger>
