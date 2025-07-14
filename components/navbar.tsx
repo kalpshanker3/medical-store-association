@@ -4,34 +4,16 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Home, Users, Bell, User, Building, Menu, X, ArrowLeft } from "lucide-react"
 import type { AppState } from "../app/page"
+import Link from "next/link"
 
-export default function Navbar({ currentPage, isLoggedIn, setCurrentPage, setIsLoggedIn, user, setUser }: AppState) {
+export default function Navbar({ isLoggedIn, setIsLoggedIn, user, setUser, logout }: any) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-
-  const handleRegister = () => {
-    setCurrentPage("register")
-    setIsMobileMenuOpen(false)
-  }
-
-  const handleLogin = () => {
-    setCurrentPage("login")
-    setIsMobileMenuOpen(false)
-  }
 
   const handleLogout = () => {
     setIsLoggedIn(false)
     setUser(null)
-    setCurrentPage("home")
+    logout()
     setIsMobileMenuOpen(false)
-  }
-
-  const handleNavClick = (page: any) => {
-    setCurrentPage(page)
-    setIsMobileMenuOpen(false)
-  }
-
-  const handleBackButton = () => {
-    window.history.back()
   }
 
   return (
@@ -40,20 +22,12 @@ export default function Navbar({ currentPage, isLoggedIn, setCurrentPage, setIsL
       <div className="container-responsive relative">
         <div className="flex justify-between items-center py-4 sm:py-5">
           {/* Back Button */}
-          {currentPage !== "home" && (
-            <Button
-              variant="ghost"
-              className="text-white/90 hover:text-white hover:bg-white/10 p-3 rounded-2xl mr-3 btn-mobile backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105"
-              onClick={handleBackButton}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
+          {/* Removed Back Button as per new_code */}
 
           {/* Logo */}
           <div
             className="flex items-center space-x-3 sm:space-x-4 cursor-pointer touch-manipulation group"
-            onClick={() => handleNavClick("home")}
+            onClick={() => {}}
           >
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-2xl transform group-hover:scale-110 group-active:scale-95 transition-all duration-300 group-hover:rotate-3 border-2 border-white/20">
               <Building className="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-lg" />
@@ -69,7 +43,7 @@ export default function Navbar({ currentPage, isLoggedIn, setCurrentPage, setIsL
               <Button
                 variant="ghost"
                 className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
-                onClick={() => handleNavClick("home")}
+                onClick={() => {}}
               >
                 <Home className="h-5 w-5 mr-2" />
                 होम
@@ -77,7 +51,7 @@ export default function Navbar({ currentPage, isLoggedIn, setCurrentPage, setIsL
               <Button
                 variant="ghost"
                 className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2"
-                onClick={() => handleNavClick("groups")}
+                onClick={() => {}}
               >
                 <Users className="h-5 w-5 mr-2" />
                 ग्रुप्स
@@ -85,7 +59,7 @@ export default function Navbar({ currentPage, isLoggedIn, setCurrentPage, setIsL
               <Button
                 variant="ghost"
                 className="text-white/90 hover:text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 rounded-2xl btn-mobile backdrop-blur-sm border border-transparent hover:border-white/20 px-4 py-2 relative"
-                onClick={() => handleNavClick("notifications")}
+                onClick={() => {}}
               >
                 <Bell className="h-5 w-5 mr-2" />
                 नोटिफिकेशन
@@ -109,13 +83,13 @@ export default function Navbar({ currentPage, isLoggedIn, setCurrentPage, setIsL
             <div className="hidden md:flex space-x-3">
               <Button
                 className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95 transition-all duration-300 btn-mobile border border-white/20 backdrop-blur-sm"
-                onClick={handleRegister}
+                onClick={() => {}}
               >
                 रजिस्टर करें
               </Button>
               <Button
                 className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95 transition-all duration-300 btn-mobile border border-white/20 backdrop-blur-sm"
-                onClick={handleLogin}
+                onClick={() => {}}
               >
                 लॉग इन करें
               </Button>
@@ -137,26 +111,14 @@ export default function Navbar({ currentPage, isLoggedIn, setCurrentPage, setIsL
           <div className="md:hidden pb-6 border-t border-white/10 mt-2 backdrop-blur-xl bg-white/5 rounded-b-3xl">
             <div className="flex flex-col space-y-3 pt-6 px-2">
               {/* Back Button for Mobile */}
-              {currentPage !== "home" && (
-                <Button
-                  variant="ghost"
-                  className="text-white/90 hover:text-white hover:bg-white/10 justify-start rounded-2xl btn-mobile backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 py-4"
-                  onClick={() => {
-                    handleBackButton()
-                    setIsMobileMenuOpen(false)
-                  }}
-                >
-                  <ArrowLeft className="h-5 w-5 mr-3" />
-                  वापस जाएं
-                </Button>
-              )}
+              {/* Removed Back Button for Mobile as per new_code */}
 
               {isLoggedIn ? (
                 <>
                   <Button
                     variant="ghost"
                     className="text-white/90 hover:text-white hover:bg-white/10 justify-start rounded-2xl btn-mobile backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 py-4"
-                    onClick={() => handleNavClick("home")}
+                    onClick={() => {}}
                   >
                     <Home className="h-5 w-5 mr-3" />
                     होम
@@ -164,7 +126,7 @@ export default function Navbar({ currentPage, isLoggedIn, setCurrentPage, setIsL
                   <Button
                     variant="ghost"
                     className="text-white/90 hover:text-white hover:bg-white/10 justify-start rounded-2xl btn-mobile backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 py-4"
-                    onClick={() => handleNavClick("groups")}
+                    onClick={() => {}}
                   >
                     <Users className="h-5 w-5 mr-3" />
                     ग्रुप्स
@@ -172,7 +134,7 @@ export default function Navbar({ currentPage, isLoggedIn, setCurrentPage, setIsL
                   <Button
                     variant="ghost"
                     className="text-white/90 hover:text-white hover:bg-white/10 justify-start rounded-2xl btn-mobile backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 py-4 relative"
-                    onClick={() => handleNavClick("notifications")}
+                    onClick={() => {}}
                   >
                     <Bell className="h-5 w-5 mr-3" />
                     नोटिफिकेशन
@@ -190,13 +152,13 @@ export default function Navbar({ currentPage, isLoggedIn, setCurrentPage, setIsL
                 <>
                   <Button
                     className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white font-semibold rounded-2xl shadow-xl btn-mobile border border-white/20 backdrop-blur-sm py-4"
-                    onClick={handleRegister}
+                    onClick={() => {}}
                   >
                     रजिस्टर करें
                   </Button>
                   <Button
                     className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white font-semibold rounded-2xl shadow-xl btn-mobile border border-white/20 backdrop-blur-sm py-4"
-                    onClick={handleLogin}
+                    onClick={() => {}}
                   >
                     लॉग इन करें
                   </Button>

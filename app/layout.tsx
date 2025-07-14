@@ -6,90 +6,98 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import type { User } from "@/lib/supabase"
+import { createContext, useContext } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const [currentPage, setCurrentPage] = useState("home")
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+// AuthContext for global auth state
+interface AuthContextType {
+  user: User | null
+  isLoggedIn: boolean
+  setUser: (user: User | null) => void
+  setIsLoggedIn: (loggedIn: boolean) => void
+  logout: () => void
+}
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider")
+  return ctx
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load session from localStorage on mount
+  // Sync with Supabase session on mount
   useEffect(() => {
-    const loadSession = () => {
-      try {
-        const savedUser = localStorage.getItem('user')
-        const savedIsLoggedIn = localStorage.getItem('isLoggedIn')
-        
-        if (savedUser && savedIsLoggedIn === 'true') {
-          let userData
-          try {
-            userData = JSON.parse(savedUser)
-            // Fallback: ensure userData has at least phone and name
-            if (!userData || !userData.phone) throw new Error('Invalid user')
-          } catch {
-            userData = null
-          }
-          if (userData) {
-            setUser(userData)
-            setIsLoggedIn(true)
-            if (userData.role === 'admin') {
-              setCurrentPage('admin')
-            }
-          } else {
-            setUser(null)
-            setIsLoggedIn(false)
-            setCurrentPage('home')
-            localStorage.removeItem('user')
-            localStorage.removeItem('isLoggedIn')
-          }
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession()
+      if (data?.session && data.session.user) {
+        // Fetch user profile from DB
+        const { data: userProfile, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.session.user.id)
+          .single()
+        if (userProfile) {
+          setUser(userProfile)
+          setIsLoggedIn(true)
+          localStorage.setItem('user', JSON.stringify(userProfile))
+          localStorage.setItem('isLoggedIn', 'true')
+        } else {
+          setUser(null)
+          setIsLoggedIn(false)
+          localStorage.removeItem('user')
+          localStorage.removeItem('isLoggedIn')
         }
-      } catch (error) {
+      } else {
         setUser(null)
         setIsLoggedIn(false)
-        setCurrentPage('home')
         localStorage.removeItem('user')
         localStorage.removeItem('isLoggedIn')
-      } finally {
-        setIsLoading(false)
       }
+      setIsLoading(false)
     }
-    loadSession()
+    checkSession()
+    // Listen for auth state changes
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const { data: userProfile, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+        if (userProfile) {
+          setUser(userProfile)
+          setIsLoggedIn(true)
+          localStorage.setItem('user', JSON.stringify(userProfile))
+          localStorage.setItem('isLoggedIn', 'true')
+        } else {
+          setUser(null)
+          setIsLoggedIn(false)
+          localStorage.removeItem('user')
+          localStorage.removeItem('isLoggedIn')
+        }
+      } else {
+        setUser(null)
+        setIsLoggedIn(false)
+        localStorage.removeItem('user')
+        localStorage.removeItem('isLoggedIn')
+      }
+    })
+    return () => {
+      listener?.subscription.unsubscribe()
+    }
   }, [])
 
-  // Save session to localStorage when user state changes
-  useEffect(() => {
-    if (user && isLoggedIn) {
-      localStorage.setItem('user', JSON.stringify(user))
-      localStorage.setItem('isLoggedIn', 'true')
-    } else {
-      localStorage.removeItem('user')
-      localStorage.removeItem('isLoggedIn')
-    }
-  }, [user, isLoggedIn])
-
-  // Logout function
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut()
     setUser(null)
     setIsLoggedIn(false)
-    setCurrentPage("home")
     localStorage.removeItem('user')
     localStorage.removeItem('isLoggedIn')
-  }
-
-  const appState = {
-    currentPage,
-    setCurrentPage,
-    isLoggedIn,
-    setIsLoggedIn,
-    user,
-    setUser,
-    logout,
   }
 
   if (isLoading) {
@@ -135,7 +143,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AuthContext.Provider value={{ user, isLoggedIn, setUser, setIsLoggedIn, logout }}>
+            {children}
+          </AuthContext.Provider>
         </ThemeProvider>
       </body>
     </html>
