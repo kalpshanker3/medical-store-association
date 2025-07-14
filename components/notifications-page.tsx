@@ -1,65 +1,47 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Bell, Calendar, AlertTriangle, Info, CheckCircle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Navbar from "./navbar"
 import type { AppState } from "../app/page"
-
-interface Notification {
-  id: number
-  title: string
-  message: string
-  type: "info" | "warning" | "success" | "emergency"
-  date: string
-  isRead: boolean
-}
+import { supabase } from "../lib/supabase"
+import type { Notification } from "../lib/supabase"
 
 export default function NotificationsPage(appState: AppState) {
-  // Sample notifications - in real app, this would come from state/API
-  const notifications: Notification[] = [
-    {
-      id: 1,
-      title: "नई सदस्यता शुल्क दरें",
-      message: "1 अप्रैल 2024 से सदस्यता शुल्क ₹100 से बढ़कर ��150 हो जाएगा। कृपया समय पर भुगतान करें।",
-      type: "warning",
-      date: "2024-03-15",
-      isRead: false,
-    },
-    {
-      id: 2,
-      title: "वार्षिक सभा की सूचना",
-      message: "वार्षिक सभा 25 मार्च 2024 को गोरखपुर मुख्यालय में आयोजित होगी। सभी सदस्यों की उपस्थिति आवश्यक है।",
-      type: "info",
-      date: "2024-03-10",
-      isRead: true,
-    },
-    {
-      id: 3,
-      title: "आपातकालीन सहायता",
-      message: "सदस्य राम प्रसाद शर्मा जी की दुर्घटना के कारण उनके परिवार को तत्काल सहायता की आवश्यकता है। कृपया दान करें।",
-      type: "emergency",
-      date: "2024-03-08",
-      isRead: false,
-    },
-    {
-      id: 4,
-      title: "नए सदस्य स्वागत",
-      message: "इस महीने 15 नए सदस्य हमारी संस्था में शामिल हुए हैं। सभी का स्वागत है!",
-      type: "success",
-      date: "2024-03-05",
-      isRead: true,
-    },
-    {
-      id: 5,
-      title: "लाइसेंस नवीनीकरण अनुस्मारक",
-      message: "कृपया अपने ड्रग लाइसेंस और फूड लाइसेंस की समाप्ति तिथि की जांच करें और समय पर नवीनीकरण कराएं।",
-      type: "warning",
-      date: "2024-03-01",
-      isRead: true,
-    },
-  ]
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch notifications from database
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true)
+        console.log("🔔 Fetching notifications...")
+        
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (error) {
+          console.error("❌ Error fetching notifications:", error)
+          return
+        }
+
+        console.log("✅ Notifications fetched:", data?.length || 0)
+        setNotifications(data || [])
+      } catch (error) {
+        console.error("❌ Error in fetchNotifications:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchNotifications()
+  }, [])
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -100,7 +82,7 @@ export default function NotificationsPage(appState: AppState) {
     }
   }
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length
+  const unreadCount = notifications.filter((n) => !n.is_read).length
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-100">
@@ -118,7 +100,12 @@ export default function NotificationsPage(appState: AppState) {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            {notifications.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">सूचनाएं लोड हो रही हैं...</p>
+              </div>
+            ) : notifications.length === 0 ? (
               <div className="text-center py-12">
                 <Bell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-600 mb-2">कोई सूचना नहीं</h3>
@@ -130,7 +117,7 @@ export default function NotificationsPage(appState: AppState) {
                   <Card
                     key={notification.id}
                     className={`shadow-lg rounded-2xl border-2 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] bg-gradient-to-r ${getNotificationColor(notification.type)} ${
-                      !notification.isRead ? "ring-2 ring-blue-300" : ""
+                      !notification.is_read ? "ring-2 ring-blue-300" : ""
                     }`}
                   >
                     <CardContent className="p-6">
@@ -148,14 +135,14 @@ export default function NotificationsPage(appState: AppState) {
                                 {notification.type === "success" && "सफलता"}
                                 {notification.type === "info" && "जानकारी"}
                               </Badge>
-                              {!notification.isRead && (
+                              {!notification.is_read && (
                                 <Badge className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs">नई</Badge>
                               )}
                             </div>
                             <p className="text-gray-700 leading-relaxed mb-3">{notification.message}</p>
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <Calendar className="h-4 w-4" />
-                              <span>{new Date(notification.date).toLocaleDateString("hi-IN")}</span>
+                              <span>{new Date(notification.created_at).toLocaleDateString("hi-IN")}</span>
                             </div>
                           </div>
                         </div>
@@ -194,11 +181,24 @@ export default function NotificationsPage(appState: AppState) {
           <Card className="bg-gradient-to-br from-green-100 to-green-200 border-0 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 sm:col-span-2 lg:col-span-1">
             <CardContent className="p-6 text-center">
               <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
-              <h3 className="text-xl font-bold text-green-800">{notifications.filter((n) => n.isRead).length}</h3>
+              <h3 className="text-xl font-bold text-green-800">{notifications.filter((n) => n.is_read).length}</h3>
               <p className="text-green-600 font-medium">पढ़ी गई सूचनाएं</p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Admin Note */}
+        {appState.user?.role === "admin" && (
+          <Card className="mt-8 bg-gradient-to-r from-orange-100 to-yellow-100 border-0 rounded-2xl shadow-lg">
+            <CardContent className="p-6 text-center">
+              <Bell className="h-8 w-8 text-orange-600 mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-orange-800 mb-2">प्रशासक सूचना</h3>
+              <p className="text-orange-700">
+                सूचना प्रबंधन के लिए प्रशासन पैनल में जाएं। आप नई सूचनाएं जोड़ सकते हैं या पुरानी हटा सकते हैं।
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

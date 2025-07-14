@@ -1,18 +1,60 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Camera, Users, Heart, Award } from "lucide-react"
 import Navbar from "./navbar"
 import type { AppState } from "../app/page"
+import { supabase } from "../lib/supabase"
+import type { GalleryImage } from "../lib/supabase"
 
 export default function GalleryPage(appState: AppState) {
-  // Gallery images will be fetched from database
-  const galleryImages: Array<{ src: string; title: string; category: string }> = []
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedCategory, setSelectedCategory] = useState("सभी")
 
   const categories = [
     { name: "सभी", icon: Camera, color: "from-purple-500 to-pink-500" },
-    { name: "कार्यक्रम", icon: Users, color: "from-blue-500 to-cyan-500" },
-    { name: "पुरस्कार", icon: Award, color: "from-yellow-500 to-orange-500" },
-    { name: "दान", icon: Heart, color: "from-red-500 to-pink-500" },
+    { name: "events", icon: Users, color: "from-blue-500 to-cyan-500" },
+    { name: "awards", icon: Award, color: "from-yellow-500 to-orange-500" },
+    { name: "charity", icon: Heart, color: "from-red-500 to-pink-500" },
+    { name: "members", icon: Users, color: "from-green-500 to-teal-500" },
+    { name: "health", icon: Heart, color: "from-indigo-500 to-purple-500" },
   ]
+
+  // Fetch gallery images from database
+  useEffect(() => {
+    const fetchGalleryImages = async () => {
+      try {
+        setLoading(true)
+        console.log("🖼️ Fetching gallery images...")
+        
+        const { data, error } = await supabase
+          .from('gallery')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (error) {
+          console.error("❌ Error fetching gallery:", error)
+          return
+        }
+
+        console.log("✅ Gallery images fetched:", data?.length || 0)
+        setGalleryImages(data || [])
+      } catch (error) {
+        console.error("❌ Error in fetchGalleryImages:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGalleryImages()
+  }, [])
+
+  // Filter images by category
+  const filteredImages = selectedCategory === "सभी" 
+    ? galleryImages 
+    : galleryImages.filter(img => img.category === selectedCategory)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-100">
@@ -36,44 +78,91 @@ export default function GalleryPage(appState: AppState) {
         <div className="flex flex-wrap justify-center gap-4 mb-8">
           {categories.map((category, index) => {
             const Icon = category.icon
+            const isActive = selectedCategory === category.name
             return (
               <button
                 key={index}
-                className={`px-6 py-3 rounded-2xl font-bold text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 bg-gradient-to-r ${category.color}`}
+                onClick={() => setSelectedCategory(category.name)}
+                className={`px-6 py-3 rounded-2xl font-bold text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 bg-gradient-to-r ${category.color} ${
+                  isActive ? 'ring-4 ring-white/50 scale-105' : ''
+                }`}
               >
                 <Icon className="h-5 w-5 inline mr-2" />
-                {category.name}
+                {category.name === "events" ? "कार्यक्रम" :
+                 category.name === "awards" ? "पुरस्कार" :
+                 category.name === "charity" ? "दान" :
+                 category.name === "members" ? "सदस्य" :
+                 category.name === "health" ? "स्वास्थ्य" :
+                 category.name}
               </button>
             )
           })}
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">फोटो लोड हो रही हैं...</p>
+          </div>
+        )}
+
         {/* Gallery Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {galleryImages.map((image, index) => (
-            <Card
-              key={index}
-              className="shadow-xl rounded-3xl border-0 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-white to-purple-50"
-            >
-              <div className="relative">
-                <img src={image.src || "/placeholder.svg"} alt={image.title} className="w-full h-64 object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white font-bold text-lg">{image.title}</h3>
-                </div>
-                <div className="absolute top-4 right-4 bg-black/50 text-white px-2 py-1 rounded-full text-xs">
-                  #{image.category}
-                </div>
+        {!loading && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredImages.length > 0 ? (
+              filteredImages.map((image, index) => (
+                <Card
+                  key={image.id || index}
+                  className="shadow-xl rounded-3xl border-0 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-white to-purple-50"
+                >
+                  <div className="relative">
+                    <img 
+                      src={image.image_url || "/placeholder.svg"} 
+                      alt={image.title} 
+                      className="w-full h-64 object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/placeholder.svg"
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="text-white font-bold text-lg">{image.title}</h3>
+                    </div>
+                    <div className="absolute top-4 right-4 bg-black/50 text-white px-2 py-1 rounded-full text-xs">
+                      #{image.category}
+                    </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-purple-600 font-medium">
+                        #{image.category === "events" ? "कार्यक्रम" :
+                          image.category === "awards" ? "पुरस्कार" :
+                          image.category === "charity" ? "दान" :
+                          image.category === "members" ? "सदस्य" :
+                          image.category === "health" ? "स्वास्थ्य" :
+                          image.category}
+                      </span>
+                      <Heart className="h-5 w-5 text-red-500 cursor-pointer hover:scale-125 transition-transform" />
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      {new Date(image.created_at).toLocaleDateString('hi-IN')}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <Camera className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 text-lg">
+                  {selectedCategory === "सभी" 
+                    ? "कोई फोटो नहीं मिली" 
+                    : `${selectedCategory} श्रेणी में कोई फोटो नहीं मिली`}
+                </p>
               </div>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-purple-600 font-medium">#{image.category}</span>
-                  <Heart className="h-5 w-5 text-red-500 cursor-pointer hover:scale-125 transition-transform" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Stats Section */}
         <div className="mt-12 grid md:grid-cols-4 gap-6">
