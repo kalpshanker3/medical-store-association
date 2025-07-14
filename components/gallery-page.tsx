@@ -42,9 +42,9 @@ export default function GalleryPage(appState: AppState) {
     }
     try {
       const filePath = `${Date.now()}_${file.name}`
-      const { data: uploadData, error: uploadError } = await supabase.storage.from('gallery-images').upload(filePath, file)
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('gallery').upload(filePath, file)
       if (uploadError) throw uploadError
-      const { data: urlData } = supabase.storage.from('gallery-images').getPublicUrl(filePath)
+      const { data: urlData } = supabase.storage.from('gallery').getPublicUrl(filePath)
       const imageUrl = urlData.publicUrl
       const { error: dbError } = await supabase.from('gallery').insert([
         { title, image_url: imageUrl }
