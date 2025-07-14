@@ -337,6 +337,20 @@ export default function AdminPage(appState: AppState) {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
+            {error && (
+              <div className="bg-red-100 text-red-800 rounded-xl p-3 text-center font-semibold mb-4">
+                {error}
+              </div>
+            )}
+            {loading && (
+              <div className="flex items-center justify-center bg-blue-100 text-blue-800 rounded-xl p-3 text-center font-semibold mb-4 gap-2">
+                <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                कृपया प्रतीक्षा करें...
+              </div>
+            )}
             <Tabs defaultValue="membership" className="w-full">
               <TabsList className="grid w-full grid-cols-6 mb-6">
                 <TabsTrigger value="membership" className="flex items-center gap-2">
@@ -391,7 +405,8 @@ export default function AdminPage(appState: AppState) {
                                 <Button
                                   size="sm"
                                   className="bg-green-500 hover:bg-green-600"
-                                  onClick={() => handleApprove("membership", request.id)}
+                                  onClick={() => handleApprove("membership", String(request.id))}
+                                  disabled={loading}
                                 >
                                   <CheckCircle className="h-4 w-4 mr-1" />
                                   स्वीकार
@@ -399,7 +414,8 @@ export default function AdminPage(appState: AppState) {
                                 <Button
                                   size="sm"
                                   variant="destructive"
-                                  onClick={() => handleReject("membership", request.id)}
+                                  onClick={() => handleReject("membership", String(request.id))}
+                                  disabled={loading}
                                 >
                                   <X className="h-4 w-4 mr-1" />
                                   अस्वीकार
@@ -441,8 +457,8 @@ export default function AdminPage(appState: AppState) {
               <TabsContent value="donations">
                 <Card className="bg-gradient-to-br from-red-50 to-pink-50 border-0 rounded-2xl">
                   <CardHeader>
-                    <CardTitle className="text-red-800 flex items-center gap-2">
-                      <Heart className="h-5 w-5" />
+                    <CardTitle className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                      <Heart className="h-5 w-5 text-red-500" />
                       दान रसीद अनुमोदन
                     </CardTitle>
                   </CardHeader>
@@ -454,24 +470,26 @@ export default function AdminPage(appState: AppState) {
                             <div className="space-y-4">
                               <div>
                                 <h4 className="font-bold text-gray-800 text-xl">दानकर्ता: {receipt.name}</h4>
-                                <p className="text-gray-600">प्राप्तकर्ता: {receipt.recipient}</p>
-                                <p className="text-red-600 font-semibold text-lg">राशि: ₹{receipt.amount}</p>
+                                <p className="text-gray-700">प्राप्तकर्ता: {receipt.recipient}</p>
+                                <p className="text-red-700 font-semibold text-lg">राशि: ₹{receipt.amount}</p>
                                 <p className="text-gray-500 text-sm">अपलोड: {receipt.uploadDate}</p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Badge className="bg-yellow-100 text-yellow-800">प्रतीक्षारत</Badge>
+                                <Badge className="bg-yellow-200 text-yellow-900">प्रतीक्षारत</Badge>
                                 <Button
                                   size="sm"
-                                  className="bg-green-500 hover:bg-green-600"
-                                  onClick={() => handleApprove("donation", receipt.id)}
+                                  className="bg-green-600 text-white hover:bg-green-700"
+                                  onClick={() => handleApprove("donation", String(receipt.id))}
+                                  disabled={loading}
                                 >
                                   <CheckCircle className="h-4 w-4 mr-1" />
                                   स्वीकार
                                 </Button>
                                 <Button
                                   size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleReject("donation", receipt.id)}
+                                  className="bg-red-600 text-white hover:bg-red-700"
+                                  onClick={() => handleReject("donation", String(receipt.id))}
+                                  disabled={loading}
                                 >
                                   <X className="h-4 w-4 mr-1" />
                                   अस्वीकार
@@ -537,7 +555,8 @@ export default function AdminPage(appState: AppState) {
                               <Button
                                 size="sm"
                                 className="bg-green-500 hover:bg-green-600"
-                                onClick={() => handleApprove("registration", form.id)}
+                                onClick={() => handleApprove("registration", String(form.id))}
+                                disabled={loading}
                               >
                                 <CheckCircle className="h-4 w-4 mr-1" />
                                 स्वीकार
@@ -545,7 +564,8 @@ export default function AdminPage(appState: AppState) {
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => handleReject("registration", form.id)}
+                                onClick={() => handleReject("registration", String(form.id))}
+                                disabled={loading}
                               >
                                 <X className="h-4 w-4 mr-1" />
                                 अस्वीकार
@@ -622,6 +642,7 @@ export default function AdminPage(appState: AppState) {
                           <Button
                             onClick={handleAddAccident}
                             className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl font-bold h-14 text-lg"
+                            disabled={loading}
                           >
                             <FileText className="h-5 w-5 mr-2" />
                             दुर्घटना जानकारी जोड़ें
@@ -691,7 +712,7 @@ export default function AdminPage(appState: AppState) {
                             rows={4}
                             className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500"
                           />
-                          <Button className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 rounded-xl font-bold">
+                          <Button className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 rounded-xl font-bold" disabled={loading}>
                             <Bell className="h-4 w-4 mr-2" />
                             सूचना प्रकाशित करें
                           </Button>
@@ -737,6 +758,7 @@ export default function AdminPage(appState: AppState) {
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => console.log(`Delete notification ${notification.id}`)}
+                                disabled={loading}
                               >
                                 <X className="h-4 w-4 mr-1" />
                                 हटाएं
@@ -797,6 +819,7 @@ export default function AdminPage(appState: AppState) {
                           <Button
                             onClick={handleAddImage}
                             className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 rounded-xl font-bold"
+                            disabled={loading}
                           >
                             <Upload className="h-4 w-4 mr-2" />
                             फोटो अपलोड करें
@@ -860,8 +883,9 @@ export default function AdminPage(appState: AppState) {
                                 <Button
                                   size="sm"
                                   variant="destructive"
-                                  onClick={() => handleDeleteImage(image.id)}
+                                  onClick={() => handleDeleteImage(String(image.id))}
                                   className="rounded-full"
+                                  disabled={loading}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -1028,9 +1052,10 @@ export default function AdminPage(appState: AppState) {
               <Button
                 className="flex-1 bg-green-500 hover:bg-green-600 h-12 text-lg"
                 onClick={() => {
-                  handleApprove("registration", selectedMemberDetails.id)
+                  handleApprove("registration", String(selectedMemberDetails.id))
                   setSelectedMemberDetails(null)
                 }}
+                disabled={loading}
               >
                 <CheckCircle className="h-5 w-5 mr-2" />
                 रजिस्ट्रेशन स्वीकार करें
@@ -1039,9 +1064,10 @@ export default function AdminPage(appState: AppState) {
                 variant="destructive"
                 className="flex-1 h-12 text-lg"
                 onClick={() => {
-                  handleReject("registration", selectedMemberDetails.id)
+                  handleReject("registration", String(selectedMemberDetails.id))
                   setSelectedMemberDetails(null)
                 }}
+                disabled={loading}
               >
                 <X className="h-5 w-5 mr-2" />
                 रजिस्ट्रेशन अस्वीकार करें
