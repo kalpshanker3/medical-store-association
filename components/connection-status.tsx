@@ -15,7 +15,46 @@ export function ConnectionStatus() {
     url: boolean
     key: boolean
     source: string
-  }>({ url: false, key: false, source: "" })
+    envData: any
+  }>({ url: false, key: false, source: "", envData: {} })
+
+  const fetchEnvironmentVariables = async () => {
+    try {
+      const response = await fetch('/api/env')
+      const result = await response.json()
+      
+      if (result.success) {
+        const envData = result.data
+        const url = 
+          envData.medo_NEXT_PUBLIC_SUPABASE_URL || 
+          envData.NEXT_PUBLIC_SUPABASE_URL ||
+          envData.medo_SUPABASE_URL
+        
+        const key = 
+          envData.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+          envData.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        
+        const source = 
+          envData.medo_NEXT_PUBLIC_SUPABASE_URL ? "Vercel (medo_)" :
+          envData.NEXT_PUBLIC_SUPABASE_URL ? "Local" : "None"
+        
+        setEnvStatus({
+          url: !!url,
+          key: !!key,
+          source,
+          envData
+        })
+        
+        console.log("🔍 Environment variables from API:", envData)
+        
+        return { url, key, source }
+      }
+    } catch (error) {
+      console.error("❌ Failed to fetch environment variables:", error)
+    }
+    
+    return { url: null, key: null, source: "None" }
+  }
 
   const checkEnvironmentVariables = () => {
     const url = 
@@ -34,7 +73,8 @@ export function ConnectionStatus() {
     setEnvStatus({
       url: !!url,
       key: !!key,
-      source
+      source,
+      envData: {}
     })
     
     return { url, key, source }
@@ -43,14 +83,19 @@ export function ConnectionStatus() {
   const checkConnection = async () => {
     setStatus("loading")
     
-    // First check environment variables
-    const envCheck = checkEnvironmentVariables()
+    // First try to fetch from API
+    const envCheck = await fetchEnvironmentVariables()
     
     if (!envCheck.url || !envCheck.key) {
-      setStatus("error")
-      setError("Environment variables missing")
-      setLastChecked(new Date())
-      return
+      // Fallback to direct check
+      const directCheck = checkEnvironmentVariables()
+      
+      if (!directCheck.url || !directCheck.key) {
+        setStatus("error")
+        setError("Environment variables missing")
+        setLastChecked(new Date())
+        return
+      }
     }
     
     try {
@@ -153,6 +198,16 @@ export function ConnectionStatus() {
           <div className="text-blue-600">
             Source: {envStatus.source}
           </div>
+          {Object.keys(envStatus.envData).length > 0 && (
+            <div className="text-xs text-gray-600 mt-2">
+              <details>
+                <summary>View Environment Data</summary>
+                <pre className="mt-1 p-2 bg-gray-100 rounded text-xs overflow-auto">
+                  {JSON.stringify(envStatus.envData, null, 2)}
+                </pre>
+              </details>
+            </div>
+          )}
         </div>
       </div>
 
@@ -173,6 +228,7 @@ export function ConnectionStatus() {
                   <li>medo_NEXT_PUBLIC_SUPABASE_ANON_KEY सेट है या नहीं</li>
                   <li>Supabase प्रोजेक्ट active है या नहीं</li>
                   <li>डेटाबेस टेबल्स बनाए गए हैं या नहीं</li>
+                  <li>App restart करें</li>
                 </ul>
               </div>
             </div>

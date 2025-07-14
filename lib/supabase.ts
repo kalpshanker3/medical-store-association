@@ -1,35 +1,66 @@
 import { createClient } from "@supabase/supabase-js"
 
-// Support multiple environment variable sources
-const supabaseUrl = 
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 
-  process.env.medo_NEXT_PUBLIC_SUPABASE_URL ||
-  process.env.VERCEL_SUPABASE_URL ||
-  process.env.SUPABASE_URL
+// Support multiple environment variable sources with runtime detection
+const getSupabaseUrl = () => {
+  // Check all possible sources
+  const sources = [
+    process.env.medo_NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.medo_SUPABASE_URL,
+    process.env.VERCEL_SUPABASE_URL,
+    // Runtime check for browser
+    typeof window !== 'undefined' ? (window as any).__SUPABASE_URL__ : null
+  ]
+  
+  const url = sources.find(source => source)
+  console.log("🔍 Supabase URL sources checked:", sources.map(s => s ? "✅ Found" : "❌ Missing"))
+  return url
+}
 
-const supabaseAnonKey = 
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
-  process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.VERCEL_SUPABASE_ANON_KEY ||
-  process.env.SUPABASE_ANON_KEY
+const getSupabaseKey = () => {
+  // Check all possible sources
+  const sources = [
+    process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.VERCEL_SUPABASE_ANON_KEY,
+    // Runtime check for browser
+    typeof window !== 'undefined' ? (window as any).__SUPABASE_KEY__ : null
+  ]
+  
+  const key = sources.find(source => source)
+  console.log("🔍 Supabase Key sources checked:", sources.map(s => s ? "✅ Found" : "❌ Missing"))
+  return key
+}
+
+const supabaseUrl = getSupabaseUrl()
+const supabaseAnonKey = getSupabaseKey()
 
 // Check if environment variables are available
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error("❌ Supabase environment variables are missing!")
   console.error("Checking all possible sources:")
-  console.error("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "✅ Present" : "❌ Missing")
   console.error("medo_NEXT_PUBLIC_SUPABASE_URL:", process.env.medo_NEXT_PUBLIC_SUPABASE_URL ? "✅ Present" : "❌ Missing")
+  console.error("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "✅ Present" : "❌ Missing")
+  console.error("medo_SUPABASE_URL:", process.env.medo_SUPABASE_URL ? "✅ Present" : "❌ Missing")
   console.error("VERCEL_SUPABASE_URL:", process.env.VERCEL_SUPABASE_URL ? "✅ Present" : "❌ Missing")
-  console.error("SUPABASE_URL:", process.env.SUPABASE_URL ? "✅ Present" : "❌ Missing")
-  console.error("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✅ Present" : "❌ Missing")
   console.error("medo_NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.medo_NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✅ Present" : "❌ Missing")
+  console.error("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✅ Present" : "❌ Missing")
   console.error("VERCEL_SUPABASE_ANON_KEY:", process.env.VERCEL_SUPABASE_ANON_KEY ? "✅ Present" : "❌ Missing")
-  console.error("SUPABASE_ANON_KEY:", process.env.SUPABASE_ANON_KEY ? "✅ Present" : "❌ Missing")
+  
+  // Check if we're in browser
+  if (typeof window !== 'undefined') {
+    console.error("🌐 Browser environment detected")
+    console.error("Window __SUPABASE_URL__:", (window as any).__SUPABASE_URL__ ? "✅ Present" : "❌ Missing")
+    console.error("Window __SUPABASE_KEY__:", (window as any).__SUPABASE_KEY__ ? "✅ Present" : "❌ Missing")
+  }
+  
   console.error("📝 Please check Vercel environment variables or create .env.local file")
 } else {
   console.log("✅ Supabase environment variables found!")
+  console.log("URL:", supabaseUrl)
+  console.log("Key:", supabaseAnonKey.substring(0, 20) + "...")
   console.log("Source:", 
-    process.env.VERCEL_SUPABASE_URL ? "Vercel" : 
+    process.env.medo_NEXT_PUBLIC_SUPABASE_URL ? "Vercel (medo_)" : 
     process.env.NEXT_PUBLIC_SUPABASE_URL ? "Local" : 
     "Other"
   )
@@ -61,6 +92,14 @@ export const supabase = createClient(
 // Test connection function
 export async function testSupabaseConnection(): Promise<{ connected: boolean; error?: string }> {
   try {
+    // First check if we have valid credentials
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return { 
+        connected: false, 
+        error: "Environment variables missing. Please check Vercel settings." 
+      }
+    }
+    
     // Test basic connection
     const { data, error } = await supabase.from("users").select("count").limit(1)
     
