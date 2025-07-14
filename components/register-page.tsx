@@ -100,19 +100,71 @@ export default function RegisterPage(appState: AppState) {
     try {
       // Register with Supabase Auth using phone as email
       const email = `${formData.phone}@example.com`
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      let authData, authError
+      // Try to sign up
+      ({ data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password: formData.password
-      })
-      if (authError || !authData.user) {
+      }))
+      // If user already exists, try to sign in
+      if (authError && authError.message && authError.message.includes("User already registered")) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password: formData.password
+        })
+        if (signInError || !signInData.user) {
+          setError("यूज़र पहले से मौजूद है, कृपया लॉगिन करें।")
+          setIsLoading(false)
+          return
+        }
+        authData = signInData
+      } else if (authError || !authData.user) {
         setError("रजिस्ट्रेशन में त्रुटि: " + (authError?.message || ""))
         setIsLoading(false)
         return
       }
-      // Insert user profile in users table
+      // Check if profile exists
+      if (!authData.user) {
+        setError("रजिस्ट्रेशन में त्रुटि: यूज़र आईडी नहीं मिली।")
+        setIsLoading(false)
+        return
+      }
+      const { data: existingProfile } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', authData.user.id)
+        .single()
+      if (existingProfile) {
+        setError("यूज़र पहले से मौजूद है, कृपया लॉगिन करें।")
+        setIsLoading(false)
+        return
+      }
+      // Insert user profile in users table (match DB field names)
       const userData = {
         id: authData.user.id,
-        ...formData,
+        name: formData.name,
+        phone: formData.phone,
+        alternate_phone: formData.alternatePhone,
+        age: formData.age,
+        aadhar: formData.aadhar,
+        location: formData.location,
+        store_name: formData.storeName,
+        gst_number: formData.gstNumber,
+        drug_license_number: formData.drugLicenseNumber,
+        drug_license_start_date: formData.drugLicenseStartDate,
+        drug_license_end_date: formData.drugLicenseEndDate,
+        food_license_number: formData.foodLicenseNumber,
+        food_license_start_date: formData.foodLicenseStartDate,
+        food_license_end_date: formData.foodLicenseEndDate,
+        account_number: formData.accountNumber,
+        ifsc: formData.ifsc,
+        branch: formData.branch,
+        nominee_name: formData.nomineeName,
+        nominee_relation: formData.nomineeRelation,
+        nominee_phone: formData.nomineePhone,
+        nominee_account_number: formData.nomineeAccountNumber,
+        nominee_ifsc: formData.nomineeIfsc,
+        nominee_branch: formData.nomineeBranch,
         status: "pending",
         role: "user"
       }
