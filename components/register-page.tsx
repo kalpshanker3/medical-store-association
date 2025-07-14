@@ -50,7 +50,6 @@ export default function RegisterPage(appState: AppState) {
     branch: "",
     nomineeName: "",
     nomineeRelation: "",
-    customNomineeRelation: "",
     nomineePhone: "",
     nomineeAccountNumber: "",
     nomineeIfsc: "",
