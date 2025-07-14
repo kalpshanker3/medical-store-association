@@ -21,49 +21,49 @@ export default function LoginPage(appState: AppState) {
   const [error, setError] = useState("")
 
   const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
     if (!formData.phone || formData.phone.length !== 10) {
-      setError("कृपया 10 अंकों का सही फ़ोन नंबर डालें")
-      return
+      setError("कृपया 10 अंकों का सही फ़ोन नंबर डालें");
+      return;
     }
     if (!formData.password || formData.password.length < 6) {
-      setError("पासवर्ड कम से कम 6 अक्षर का होना चाहिए")
-      return
+      setError("पासवर्ड कम से कम 6 अक्षर का होना चाहिए");
+      return;
     }
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       // Use phone as email for Supabase Auth
-      const email = `${formData.phone}@example.com`
+      const email = formData.phone + "@example.com";
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
-        password: formData.password
-      })
+        password: formData.password,
+      });
       if (authError || !data.session) {
-        setError("फोन नंबर या पासवर्ड गलत है")
-        setIsLoading(false)
-        return
+        setError("फोन नंबर या पासवर्ड गलत है");
+        setIsLoading(false);
+        return;
       }
       // Fetch user profile from DB
       const { data: userProfile, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', data.user.id)
-        .single()
+        .from("users")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
       if (userProfile) {
-        appState.setUser(userProfile)
-        appState.setIsLoggedIn(true)
-        setError("")
-        appState.setCurrentPage("status")
+        appState.setUser(userProfile);
+        appState.setIsLoggedIn(true);
+        setError("");
+        appState.setCurrentPage("status");
       } else {
-        setError("यूज़र प्रोफाइल नहीं मिली")
+        setError("यूज़र प्रोफाइल नहीं मिली (profile missing in database)");
       }
     } catch (error) {
-      setError("लॉगिन में त्रुटि हुई")
+      setError("लॉगिन में त्रुटि हुई");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-100 relative overflow-hidden">
