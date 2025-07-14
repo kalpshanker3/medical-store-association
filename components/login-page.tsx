@@ -1,12 +1,11 @@
 "use client"
 
+import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { LogIn, Eye, EyeOff, ArrowRight, UserPlus } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { User, Phone, Shield, CheckCircle } from "lucide-react"
 import Navbar from "./navbar"
 import type { AppState } from "../app/page"
 import { loginUser } from "../lib/auth"
@@ -16,156 +15,118 @@ export default function LoginPage(appState: AppState) {
     phone: "",
     password: "",
   })
-
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const validateForm = () => {
-    if (!formData.phone.trim()) {
-      setError("फोन नंबर आवश्यक है")
-      return false
-    }
-    if (formData.phone.length !== 10) {
-      setError("फोन नंबर 10 अंकों का होना चाहिए")
-      return false
-    }
-    if (!formData.password) {
-      setError("पासवर्ड आवश्यक है")
-      return false
-    }
-    return true
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-
-    if (!validateForm()) {
+    if (!formData.phone || formData.phone.length !== 10) {
+      setError("कृपया 10 अंकों का सही फ़ोन नंबर डालें")
       return
     }
-
-    setLoading(true)
-
+    if (!formData.password || formData.password.length < 6) {
+      setError("पासवर्ड कम से कम 6 अक्षर का होना चाहिए")
+      return
+    }
+    setIsLoading(true)
     try {
       const result = await loginUser(formData.phone, formData.password)
-
       if (result.success && result.user) {
-        // Set user data in app state
-        appState.setUser({
-          id: result.user.id,
-          name: result.user.name,
-          phone: result.user.phone,
-          storeName: result.user.store_name || "",
-          location: result.user.location || "",
-          role: result.user.role || "user",
-          status: result.user.status || "active",
-        })
+        appState.setUser(result.user)
         appState.setIsLoggedIn(true)
-        
-        // Redirect based on role
-        if (result.user.role === "admin") {
-          appState.setCurrentPage("admin")
-        } else {
-          appState.setCurrentPage("home")
-        }
+        appState.setCurrentPage("home")
       } else {
         setError(result.message)
       }
     } catch (error) {
-      console.error("Login error:", error)
       setError("लॉगिन में त्रुटि हुई")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-100 relative overflow-hidden">
       <Navbar {...appState} />
-
-      <div className="container-responsive py-4 sm:py-6 lg:py-8">
-        <Card className="max-w-md mx-auto shadow-2xl rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-white via-slate-50 to-gray-50">
-          <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-2xl sm:rounded-t-3xl">
-            <CardTitle className="text-xl sm:text-2xl font-bold text-center flex items-center justify-center gap-3">
-              <LogIn className="h-6 w-6 sm:h-8 sm:w-8" />
-              लॉगिन
+      <div className="container-responsive py-8 flex items-center justify-center min-h-[80vh] relative">
+        <Card className="w-full max-w-md shadow-2xl rounded-3xl border-0 bg-gradient-to-br from-white/90 via-indigo-50/90 to-purple-50/90 backdrop-blur-xl border border-white/20 hover:shadow-3xl transition-all duration-500">
+          <CardHeader className="bg-gradient-to-r from-slate-700 via-indigo-600 to-purple-600 text-white rounded-t-3xl relative">
+            <CardTitle className="text-2xl font-bold text-center flex items-center justify-center gap-3">
+              <Shield className="h-8 w-8 drop-shadow-lg" />
+              <span className="drop-shadow-sm">लॉगिन</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error Message */}
+          <CardContent className="p-8 relative">
+            <form onSubmit={handleFormSubmit} className="space-y-6">
               {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+                <div className="bg-red-100 text-red-800 rounded-xl p-3 text-center font-semibold">
+                  {error}
+                </div>
               )}
-
-              {/* Phone Number */}
-              <div>
-                <Label htmlFor="phone">फोन नंबर *</Label>
+              <div className="space-y-3">
+                <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-indigo-600" />
+                  फ़ोन नंबर (व्हाट्सऐप नंबर)
+                </label>
                 <Input
-                  id="phone"
-                  name="phone"
                   type="tel"
+                  placeholder="10 अंकों का मोबाइल नंबर"
                   value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="10 अंकों का नंबर"
-                  maxLength={10}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 h-14 text-lg backdrop-blur-sm bg-white/80 font-medium"
                   required
+                  maxLength={10}
                 />
               </div>
-
-              {/* Password */}
-              <div>
-                <Label htmlFor="password">पासवर्ड *</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="अपना पासवर्ड लिखें"
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-green-600 hover:bg-green-700"
-              >
-                {loading ? "लॉगिन हो रहा है..." : "लॉगिन करें"}
-              </Button>
-
-              {/* Register Link */}
-              <div className="text-center">
+              <div className="space-y-3">
+                <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-indigo-600" />
+                  पासवर्ड
+                </label>
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="अपना पासवर्ड लिखें"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 h-14 text-lg backdrop-blur-sm bg-white/80 font-medium"
+                  required
+                  minLength={6}
+                />
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => appState.setCurrentPage("register")}
-                  className="flex items-center gap-2 mx-auto"
+                  variant="ghost"
+                  className="text-indigo-600 text-xs px-2 py-1"
+                  onClick={() => setShowPassword((v) => !v)}
                 >
-                  <UserPlus className="h-4 w-4" />
+                  {showPassword ? "पासवर्ड छुपाएं" : "पासवर्ड दिखाएं"}
+                </Button>
+              </div>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-16 text-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500 hover:from-indigo-600 hover:via-purple-600 hover:to-blue-600 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold border-2 border-white/20 backdrop-blur-sm"
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>लॉगिन हो रहा है...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-6 w-6" />
+                    <span>लॉगिन करें</span>
+                  </div>
+                )}
+              </Button>
+              <div className="mt-6 text-center">
+                <Button
+                  variant="ghost"
+                  onClick={() => appState.setCurrentPage("register")}
+                  className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-2xl font-semibold px-6 py-3 transition-all duration-300"
+                >
                   नया अकाउंट बनाएं
-                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
             </form>
