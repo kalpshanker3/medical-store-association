@@ -220,13 +220,16 @@ export default function HomePage(appState: AppState) {
                   )}
                 </div>
 
-                <Link href="/membership-payment">
-                  <Button
-                    className="w-full h-16 sm:h-18 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 rounded-2xl font-bold text-white shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 btn-mobile text-lg border-2 border-white/20 backdrop-blur-sm"
-                  >
-                    💳 सदस्यता शुल्क भरें
-                  </Button>
-                </Link>
+                {/* Only show payment button if not active */}
+                {appState.user?.membership_status !== "active" && (
+                  <Link href="/membership-payment">
+                    <Button
+                      className="w-full h-16 sm:h-18 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 rounded-2xl font-bold text-white shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 btn-mobile text-lg border-2 border-white/20 backdrop-blur-sm"
+                    >
+                      💳 सदस्यता शुल्क भरें
+                    </Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
 
