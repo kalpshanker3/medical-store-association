@@ -25,7 +25,6 @@ import type { AppState } from "../lib/types"
 import { registerUser } from "../lib/auth"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import bcrypt from 'bcryptjs'
 
 export default function RegisterPage(appState: AppState) {
   const router = useRouter()
