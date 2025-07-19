@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,8 +9,10 @@ import Navbar from "./navbar"
 import type { AppState } from "../lib/types"
 import { loginUser } from "../lib/auth"
 import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
 
 export default function LoginPage(appState: AppState) {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     phone: "",
     password: "",
@@ -19,6 +20,13 @@ export default function LoginPage(appState: AppState) {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+
+  // Redirect to home if already logged in
+  useEffect(() => {
+    if (appState.isLoggedIn) {
+      router.push("/")
+    }
+  }, [appState.isLoggedIn, router])
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +62,8 @@ export default function LoginPage(appState: AppState) {
         appState.setUser(userProfile);
         appState.setIsLoggedIn(true);
         setError("");
-        appState.setCurrentPage("status");
+        // Redirect to home page after successful login
+        router.push("/");
       } else {
         setError("यूज़र प्रोफाइल नहीं मिली (profile missing in database)");
       }

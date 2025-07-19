@@ -5,12 +5,28 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Clock, Sparkles } from "lucide-react"
 import Navbar from "./navbar"
-import type { AppState } from "../app/page"
+import type { AppState } from "../lib/types"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function StatusPage(appState: AppState) {
+  const router = useRouter()
+
+  // Redirect to home if user is approved
+  useEffect(() => {
+    if (appState.isLoggedIn && appState.user && appState.user.status === "approved") {
+      router.push("/")
+    }
+  }, [appState.isLoggedIn, appState.user, router])
+
+  // Don't render anything if user is approved (will redirect)
+  if (appState.isLoggedIn && appState.user && appState.user.status === "approved") {
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100">
-      <Navbar {...appState} />
+      <Navbar />
 
       <div className="container mx-auto px-4 py-16">
         <Card className="max-w-lg mx-auto text-center shadow-2xl rounded-3xl border-0 bg-gradient-to-br from-white via-green-50 to-emerald-50 transform hover:scale-105 transition-all duration-500">
@@ -46,7 +62,7 @@ export default function StatusPage(appState: AppState) {
             </div>
 
             <Button
-              onClick={() => appState.setCurrentPage("home")}
+              onClick={() => router.push("/")}
               className="w-full h-16 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 rounded-2xl text-xl font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
             >
               🏠 होम पेज पर जाएं

@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,8 +24,10 @@ import Navbar from "./navbar"
 import type { AppState } from "../lib/types"
 import { registerUser } from "../lib/auth"
 import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
 
 export default function RegisterPage(appState: AppState) {
+  const router = useRouter()
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
     phone: "",
@@ -60,6 +61,13 @@ export default function RegisterPage(appState: AppState) {
   const [success, setSuccess] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  // Redirect to home if already logged in
+  useEffect(() => {
+    if (appState.isLoggedIn) {
+      router.push("/")
+    }
+  }, [appState.isLoggedIn, router])
 
   // Step 1 submit handler
   const handleStep1Submit = (e: React.FormEvent) => {
@@ -177,7 +185,8 @@ export default function RegisterPage(appState: AppState) {
       appState.setUser(userData)
       appState.setIsLoggedIn(true)
       setSuccess("रजिस्ट्रेशन सफल! आपका आवेदन समीक्षा में है।")
-      appState.setCurrentPage("status")
+      // Redirect to home page after successful registration
+      router.push("/")
     } catch (error) {
       setError("रजिस्ट्रेशन में त्रुटि हुई")
     } finally {
