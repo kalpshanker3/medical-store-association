@@ -249,7 +249,7 @@ export default function RegisterPage(appState: AppState) {
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
                     <Shield className="h-4 w-4" />
                     पासवर्ड की पुष्टि *
@@ -269,6 +269,28 @@ export default function RegisterPage(appState: AppState) {
                     onClick={() => setShowConfirmPassword((v) => !v)}
                   >
                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                <div className="space-y-2 relative">
+                  <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    पासवर्ड फिर से लिखें (Double Recheck Password) *
+                  </label>
+                  <Input
+                    required
+                    type={showDoubleRecheckPassword ? "text" : "password"}
+                    placeholder="पासवर्ड फिर से लिखें"
+                    value={formData.doubleRecheckPassword}
+                    onChange={(e) => setFormData({ ...formData, doubleRecheckPassword: e.target.value })}
+                    className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black pr-12"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-700"
+                    tabIndex={-1}
+                    onClick={() => setShowDoubleRecheckPassword((v) => !v)}
+                  >
+                    {showDoubleRecheckPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
                 {error && <div className="text-red-600 font-bold text-center">{error}</div>}
