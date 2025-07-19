@@ -537,16 +537,16 @@ export default function AdminPage(appState: AppState) {
                                   भुगतान रसीद:
                                 </h5>
                                 <img
-                                  src={request.receiptImage || "/placeholder.svg"}
+                                  src={request.receipt_image_url || "/placeholder.svg"}
                                   alt="Payment Receipt"
                                   className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                                  onClick={() => setSelectedReceiptImage(request.receiptImage)}
+                                  onClick={() => setSelectedReceiptImage(request.receipt_image_url)}
                                 />
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   className="w-full mt-2 bg-transparent"
-                                  onClick={() => setSelectedReceiptImage(request.receiptImage)}
+                                  onClick={() => setSelectedReceiptImage(request.receipt_image_url)}
                                 >
                                   <Eye className="h-4 w-4 mr-1" />
                                   बड़ा देखें
