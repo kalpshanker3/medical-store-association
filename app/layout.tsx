@@ -33,6 +33,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   // Sync with Supabase session on mount
   useEffect(() => {
+    // Check for expired memberships
+    const checkExpiredMemberships = async () => {
+      try {
+        const { error } = await supabase.rpc('check_expired_memberships')
+        if (error) console.error('Error checking expired memberships:', error)
+      } catch (err) {
+        console.error('Failed to check expired memberships:', err)
+      }
+    }
+    
+    // Check expired memberships on app load
+    checkExpiredMemberships()
+    
     // Remove timeout logic, just fetch session/profile as before
     const checkSession = async () => {
       try {

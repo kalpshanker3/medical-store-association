@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, CreditCard, Building, Hash, CheckCircle } from "lucide-react"
 import Navbar from "./navbar"
-import type { AppState } from "../app/page"
+import type { AppState } from "../lib/types"
 import { supabase } from "../lib/supabase"
 
 export default function MembershipPaymentPage(appState: AppState) {
@@ -38,11 +38,14 @@ export default function MembershipPaymentPage(appState: AppState) {
       const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(filePath)
       const fileUrl = urlData.publicUrl
       // Insert into membership_payments table
+      const currentYear = new Date().getFullYear()
       const { error: dbError } = await supabase.from('membership_payments').insert([
         {
           user_id: appState.user.id,
-          receipt_url: fileUrl,
+          receipt_image_url: fileUrl,
           status: 'pending',
+          membership_year: currentYear,
+          amount: 100.00
         }
       ])
       if (dbError) throw dbError
@@ -56,7 +59,7 @@ export default function MembershipPaymentPage(appState: AppState) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-100">
-      <Navbar {...appState} />
+      <Navbar />
 
       <div className="container-responsive py-4 sm:py-6 lg:py-8">
         <Card className="max-w-2xl mx-auto shadow-2xl rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-white via-green-50 to-emerald-50">
@@ -149,7 +152,7 @@ export default function MembershipPaymentPage(appState: AppState) {
 
             <div className="mt-6 text-center">
               <Button
-                onClick={() => appState.setCurrentPage("home")}
+                onClick={() => window.location.href = "/"}
                 className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-xl px-8 py-3 font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
               >
                 🏠 होम पेज पर वापस जाएं

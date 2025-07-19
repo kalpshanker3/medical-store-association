@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreditCard, Sparkles, Heart, Users, Database } from "lucide-react"
 import Navbar from "./navbar"
-import type { AppState } from "../app/page"
+import type { AppState } from "../lib/types"
 import { Badge } from "@/components/ui/badge"
 import { supabase, testSupabaseConnection } from "../lib/supabase"
 import { ConnectionStatus } from "./connection-status"
@@ -69,14 +69,14 @@ export default function HomePage(appState: AppState) {
     return () => clearInterval(refreshTimer)
   }, [])
 
-  // Fetch the user's membership status from the database on mount and update appState.user.membershipStatus accordingly. Display '✅ सक्रिय सदस्य' if active, otherwise '⏳ सदस्यता प्रतीक्षारत'.
+  // Fetch the user's membership status from the database on mount and update appState.user with latest membership information
   useEffect(() => {
     // Fetch latest user profile to get membership status
     const fetchUserProfile = async () => {
       if (appState.isLoggedIn && appState.user?.id) {
         const { data, error } = await supabase.from('users').select('*').eq('id', appState.user.id).single()
         if (data) {
-          appState.setUser({ ...appState.user, membershipStatus: data.membershipStatus })
+          appState.setUser({ ...appState.user, ...data })
         }
       }
     }
@@ -93,7 +93,7 @@ export default function HomePage(appState: AppState) {
         className={`absolute inset-0 bg-[url("data:image/svg+xml,%3Csvg%20width='60'%20height='60'%20viewBox='0%200%2060%2060'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cg%20fill='none'%20fillRule='evenodd'%3E%3Cg%20fill='%236366f1'%20fillOpacity='0.05'%3E%3Ccircle%20cx='30'%20cy='30'%20r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")] opacity-40`}
       />
 
-      <Navbar {...appState} />
+      <Navbar />
 
       <div className="container-responsive py-6 sm:py-8 lg:py-12 relative bg-slate-200">
         {/* About Section */}
@@ -166,10 +166,40 @@ export default function HomePage(appState: AppState) {
                   <p className="text-slate-600 font-medium mb-6 text-lg">वार्षिक सदस्यता: ₹100</p>
                 </div>
                 <div className="mb-6">
-                  {appState.user?.membershipStatus === "active" ? (
-                    <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg">
-                      ✅ सक्रिय सदस्य
-                    </Badge>
+                  {appState.user?.membership_status === "active" ? (
+                    <div className="space-y-3">
+                      <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg">
+                        ✅ सक्रिय सदस्य
+                      </Badge>
+                      {appState.user?.membership_expiry_date && (
+                        <div className="text-sm text-slate-600 bg-white/80 p-3 rounded-xl border border-emerald-200">
+                          <p className="font-semibold">सदस्यता समाप्ति: {new Date(appState.user.membership_expiry_date).toLocaleDateString('hi-IN')}</p>
+                          <p className="text-xs text-slate-500">
+                            {(() => {
+                              const expiryDate = new Date(appState.user.membership_expiry_date)
+                              const today = new Date()
+                              const daysLeft = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                              if (daysLeft > 0) {
+                                return `${daysLeft} दिन शेष`
+                              } else if (daysLeft === 0) {
+                                return "आज समाप्त हो रही है"
+                              } else {
+                                return "समाप्त हो गई है"
+                              }
+                            })()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : appState.user?.membership_status === "expired" ? (
+                    <div className="space-y-3">
+                      <Badge className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg">
+                        ⚠️ सदस्यता समाप्त
+                      </Badge>
+                      <div className="text-sm text-slate-600 bg-white/80 p-3 rounded-xl border border-red-200">
+                        <p className="font-semibold text-red-700">कृपया नई सदस्यता के लिए भुगतान करें</p>
+                      </div>
+                    </div>
                   ) : (
                     <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg">
                       ⏳ सदस्यता प्रतीक्षारत

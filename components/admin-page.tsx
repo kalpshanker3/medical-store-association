@@ -183,11 +183,34 @@ export default function AdminPage(appState: AppState) {
     setError(null)
     try {
       if (type === "membership") {
+        // Get the current year for membership
+        const currentYear = new Date().getFullYear()
+        
         const { error } = await supabase
           .from("membership_payments")
-          .update({ status: "approved", approved_by: appState.user.id, approved_at: new Date().toISOString() })
+          .update({ 
+            status: "approved", 
+            approved_by: appState.user.id, 
+            approved_at: new Date().toISOString(),
+            membership_year: currentYear
+          })
           .eq("id", id)
         if (error) throw error
+        
+        // The trigger will automatically update the user's membership status
+        // But we can also manually update it for immediate feedback
+        const payment = membershipRequests.find((p: any) => p.id === id)
+        if (payment) {
+          const { error: userError } = await supabase
+            .from("users")
+            .update({ 
+              membership_status: "active",
+              membership_start_date: `${currentYear}-04-01`,
+              membership_expiry_date: `${currentYear + 1}-03-31`
+            })
+            .eq("id", payment.user_id)
+          if (userError) console.error("User update error:", userError)
+        }
       } else if (type === "donation") {
         const { error } = await supabase
           .from("donations")
@@ -197,7 +220,7 @@ export default function AdminPage(appState: AppState) {
       } else if (type === "registration") {
         const { error } = await supabase
           .from("users")
-          .update({ status: "approved", membership_status: "active" })
+          .update({ status: "approved" })
           .eq("id", id)
         if (error) throw error
       }
