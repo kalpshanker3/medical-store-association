@@ -147,8 +147,6 @@ export default function RegisterPage(appState: AppState) {
         setIsLoading(false)
         return
       }
-      // Hash the password for storage in users table
-      const passwordHash = await bcrypt.hash(formData.password, 10)
       // Insert user profile in users table (match DB field names)
       const userData = {
         id: authData.user.id,
@@ -176,8 +174,7 @@ export default function RegisterPage(appState: AppState) {
         nominee_ifsc: formData.nomineeIfsc,
         nominee_branch: formData.nomineeBranch,
         status: "pending",
-        role: "user",
-        password: formData.confirmPassword // Store confirm password as plain text
+        role: "user"
       }
       const { error: dbError } = await supabase.from('users').insert(userData)
       if (dbError) {
