@@ -83,6 +83,19 @@ export default function HomePage(appState: AppState) {
     fetchUserProfile()
   }, [appState.isLoggedIn, appState.user?.id])
 
+  // Auto-refresh user profile on window focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (appState.isLoggedIn && appState.user?.id) {
+        supabase.from('users').select('*').eq('id', appState.user.id).single().then(({ data }) => {
+          if (data) appState.setUser({ ...appState.user, ...data })
+        })
+      }
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [appState.isLoggedIn, appState.user?.id])
+
   // Remove any code that checks or displays database connection status, alerts, or debug info
 
 

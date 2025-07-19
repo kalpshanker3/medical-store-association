@@ -183,9 +183,14 @@ export default function AdminPage(appState: AppState) {
     setError(null)
     try {
       if (type === "membership") {
-        // Get the current year for membership
+        // Always set membership_year, even for old records
         const currentYear = new Date().getFullYear()
-        
+        // First, update the payment record to ensure membership_year is set
+        await supabase
+          .from("membership_payments")
+          .update({ membership_year: currentYear })
+          .eq("id", id)
+        // Now approve the payment
         const { error } = await supabase
           .from("membership_payments")
           .update({ 
@@ -196,9 +201,7 @@ export default function AdminPage(appState: AppState) {
           })
           .eq("id", id)
         if (error) throw error
-        
-        // The trigger will automatically update the user's membership status
-        // But we can also manually update it for immediate feedback
+        // The trigger will update the user's membership status and expiry
         const payment = membershipRequests.find((p: any) => p.id === id)
         if (payment) {
           const { error: userError } = await supabase
