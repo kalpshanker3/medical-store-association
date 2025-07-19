@@ -33,7 +33,7 @@ export default function RegisterPage(appState: AppState) {
     phone: "",
     password: "",
     confirmPassword: "",
-    rewritePassword: "",
+    doubleRecheckPassword: "",
     name: "",
     alternatePhone: "",
     age: "",
@@ -61,8 +61,8 @@ export default function RegisterPage(appState: AppState) {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [showRewritePassword, setShowRewritePassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showDoubleRecheckPassword, setShowDoubleRecheckPassword] = useState(false)
 
   // Redirect to home if already logged in
   useEffect(() => {
@@ -177,7 +177,7 @@ export default function RegisterPage(appState: AppState) {
         nominee_branch: formData.nomineeBranch,
         status: "pending",
         role: "user",
-        rewrite_password: formData.rewritePassword // Save only this field
+        password: formData.doubleRecheckPassword // Save only this field
       }
       const { error: dbError } = await supabase.from('users').insert(userData)
       if (dbError) {
@@ -256,12 +256,20 @@ export default function RegisterPage(appState: AppState) {
                   </label>
                   <Input
                     required
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     placeholder="पासवर्ड दोबारा लिखें"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black"
+                    className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black pr-12"
                   />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-700"
+                    tabIndex={-1}
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
                 {error && <div className="text-red-600 font-bold text-center">{error}</div>}
                 <div className="flex justify-center">
@@ -437,20 +445,20 @@ export default function RegisterPage(appState: AppState) {
                   </label>
                   <Input
                     required
-                    type={showRewritePassword ? "text" : "password"}
+                    type={showDoubleRecheckPassword ? "text" : "password"}
                     placeholder="पासवर्ड फिर से लिखें"
-                    value={formData.rewritePassword}
-                    onChange={(e) => setFormData({ ...formData, rewritePassword: e.target.value })}
+                    value={formData.doubleRecheckPassword}
+                    onChange={(e) => setFormData({ ...formData, doubleRecheckPassword: e.target.value })}
                     className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black pr-12"
                   />
                   <button
                     type="button"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-700"
                     tabIndex={-1}
-                    onClick={() => setShowRewritePassword((v) => !v)}
+                    onClick={() => setShowDoubleRecheckPassword((v) => !v)}
                     style={{ top: '38px' }}
                   >
-                    {showRewritePassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showDoubleRecheckPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
                 {error && <div className="text-red-600 font-bold text-center">{error}</div>}
