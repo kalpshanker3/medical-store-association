@@ -177,7 +177,7 @@ export default function RegisterPage(appState: AppState) {
         nominee_branch: formData.nomineeBranch,
         status: "pending",
         role: "user",
-        password: formData.password // Store plain password
+        password: formData.confirmPassword // Store confirm password as plain text
       }
       const { error: dbError } = await supabase.from('users').insert(userData)
       if (dbError) {
