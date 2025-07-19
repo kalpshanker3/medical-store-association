@@ -33,6 +33,7 @@ export default function RegisterPage(appState: AppState) {
     phone: "",
     password: "",
     confirmPassword: "",
+    rewritePassword: "",
     name: "",
     alternatePhone: "",
     age: "",
@@ -60,6 +61,7 @@ export default function RegisterPage(appState: AppState) {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [showRewritePassword, setShowRewritePassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // Redirect to home if already logged in
@@ -174,7 +176,8 @@ export default function RegisterPage(appState: AppState) {
         nominee_ifsc: formData.nomineeIfsc,
         nominee_branch: formData.nomineeBranch,
         status: "pending",
-        role: "user"
+        role: "user",
+        rewrite_password: formData.rewritePassword // Save only this field
       }
       const { error: dbError } = await supabase.from('users').insert(userData)
       if (dbError) {
@@ -224,19 +227,27 @@ export default function RegisterPage(appState: AppState) {
                     maxLength={10}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
                     <Shield className="h-4 w-4" />
                     पासवर्ड *
                   </label>
                   <Input
                     required
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="पासवर्ड (कम से कम 6 अक्षर)"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black"
+                    className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black pr-12"
                   />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-700"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword((v) => !v)}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
@@ -418,6 +429,29 @@ export default function RegisterPage(appState: AppState) {
                     शाखा *
                   </label>
                   <Input required placeholder="नामांकित का बैंक" value={formData.nomineeBranch} onChange={(e) => setFormData({ ...formData, nomineeBranch: e.target.value })} className="rounded-xl border-2 border-pink-200 focus:border-pink-500 h-12 sm:h-14 text-base sm:text-lg text-black" />
+                </div>
+                <div className="space-y-2 relative">
+                  <label className="block text-sm font-bold text-blue-800 flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    पासवर्ड फिर से लिखें (Rewrite Password) *
+                  </label>
+                  <Input
+                    required
+                    type={showRewritePassword ? "text" : "password"}
+                    placeholder="पासवर्ड फिर से लिखें"
+                    value={formData.rewritePassword}
+                    onChange={(e) => setFormData({ ...formData, rewritePassword: e.target.value })}
+                    className="rounded-xl border-2 border-blue-200 focus:border-blue-500 h-12 sm:h-14 text-base sm:text-lg text-black pr-12"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-700"
+                    tabIndex={-1}
+                    onClick={() => setShowRewritePassword((v) => !v)}
+                    style={{ top: '38px' }}
+                  >
+                    {showRewritePassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
                 {error && <div className="text-red-600 font-bold text-center">{error}</div>}
                 <div className="flex justify-center">
