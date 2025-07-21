@@ -68,6 +68,9 @@ export default function PaymentHistoryPage(props: PageProps) {
     .filter((payment) => payment.status === "approved")
     .reduce((sum, payment) => sum + payment.amount, 0)
 
+  // Only show payment history for the logged-in user
+  const filteredHistory = user ? paymentHistory.filter((p) => p.donor_id === user.id) : [];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-100">
       <Navbar />
@@ -132,7 +135,7 @@ export default function PaymentHistoryPage(props: PageProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {paymentHistory.map((payment, index) => (
+                  {filteredHistory.map((payment, index) => (
                     <tr
                       key={payment.id}
                       className={`border-b hover:bg-gradient-to-r hover:from-violet-50 hover:to-purple-50 transition-all duration-200 ${
@@ -152,7 +155,7 @@ export default function PaymentHistoryPage(props: PageProps) {
                       <td className="px-6 py-4 text-gray-700 font-medium max-w-xs truncate">{payment.users?.name || "-"}</td>
                       <td className="px-6 py-4">
                         {payment.receipt_image_url ? (
-                          <a href={payment.receipt_image_url} target="_blank" rel="noopener noreferrer">
+                          <a href={payment.receipt_image_url} download target="_blank" rel="noopener noreferrer">
                             <Button size="sm" className="bg-gradient-to-r from-indigo-400 to-purple-500 hover:from-indigo-500 hover:to-purple-600 rounded-xl font-bold">
                               <Download className="h-4 w-4 mr-1" />
                               रसीद
