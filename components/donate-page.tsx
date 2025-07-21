@@ -1,26 +1,49 @@
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Hash, Building, CreditCard, Upload, Heart, User } from "lucide-react"
 import Navbar from "./navbar"
-import type { AppState } from "../app/page"
+import type { User } from "@/lib/supabase"
+import { supabase, Accident } from "@/lib/supabase"
+import { useAuth } from "../app/layout"
 
-interface DeceasedMember {
-  name: string
-  aadhar: string
-  storeName: string
-  accountNumber: string
-  ifsc: string
-  branch: string
-  accidentType: string
+interface PageProps {
+  user: User | null;
+  isLoggedIn: boolean;
 }
 
-export default function DonatePage(appState: AppState) {
-  const deceasedMembers: DeceasedMember[] = []
+export default function DonatePage(props: PageProps) {
+  const { user, isLoggedIn } = useAuth();
+  const [deceasedMembers, setDeceasedMembers] = useState<Accident[]>([])
+
+  // Data fetch + real-time
+  useEffect(() => {
+    let accidentSubscription: any
+    const fetchAccidents = async () => {
+      const { data, error } = await supabase
+        .from("accidents")
+        .select(`*, users:member_id(name, aadhar, store_name, account_number, ifsc, branch)`) // join user info
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+      if (!error && data) setDeceasedMembers(data)
+    }
+    fetchAccidents()
+    // Real-time listener
+    accidentSubscription = supabase
+      .channel('accidents-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'accidents' }, () => {
+        fetchAccidents()
+      })
+      .subscribe()
+    return () => {
+      if (accidentSubscription) supabase.removeChannel(accidentSubscription)
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-100">
-      <Navbar {...appState} />
+      <Navbar {...props} />
 
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
@@ -31,15 +54,12 @@ export default function DonatePage(appState: AppState) {
           <p className="text-xl text-gray-700 font-medium">🙏 उनकी जल्दी स्वस्थता की कामना और परिवार को सहारा मिले</p>
         </div>
 
-        {deceasedMembers.map((member, index) => (
-          <Card
-            key={index}
-            className="mb-8 shadow-2xl rounded-3xl border-0 bg-gradient-to-br from-white via-orange-50 to-red-50 hover:shadow-3xl transition-all duration-500"
-          >
+        {deceasedMembers.map((accident, index) => (
+          <Card key={accident.id} className="mb-8 shadow-2xl rounded-3xl border-0 bg-gradient-to-br from-white via-orange-50 to-red-50 hover:shadow-3xl transition-all duration-500">
             <CardHeader className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-t-3xl">
               <CardTitle className="text-2xl flex items-center gap-3">
                 <User className="h-8 w-8" />
-                {member.name}
+                {accident.users?.name || "-"}
                 <span className="text-lg">🕯️</span>
               </CardTitle>
             </CardHeader>
@@ -50,41 +70,36 @@ export default function DonatePage(appState: AppState) {
                     <Hash className="h-6 w-6 mr-3 text-blue-600" />
                     <div>
                       <span className="text-sm text-gray-600 font-medium">आधार नंबर:</span>
-                      <div className="font-bold text-lg text-blue-800">{member.aadhar}</div>
+                      <div className="font-bold text-lg text-blue-800">{accident.users?.aadhar || "-"}</div>
                     </div>
                   </div>
-
                   <div className="flex items-center p-4 bg-gradient-to-r from-green-100 to-emerald-100 rounded-2xl">
                     <Building className="h-6 w-6 mr-3 text-green-600" />
                     <div>
                       <span className="text-sm text-gray-600 font-medium">स्टोर का नाम:</span>
-                      <div className="font-bold text-lg text-green-800">{member.storeName}</div>
+                      <div className="font-bold text-lg text-green-800">{accident.users?.store_name || "-"}</div>
                     </div>
                   </div>
-
                   <div className="flex items-center p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl">
                     <CreditCard className="h-6 w-6 mr-3 text-purple-600" />
                     <div>
                       <span className="text-sm text-gray-600 font-medium">खाता नंबर:</span>
-                      <div className="font-bold text-lg text-purple-800">{member.accountNumber}</div>
+                      <div className="font-bold text-lg text-purple-800">{accident.users?.account_number || "-"}</div>
                     </div>
                   </div>
                 </div>
-
                 <div className="space-y-4">
                   <div className="p-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl">
                     <span className="text-sm text-gray-600 font-medium">IFSC कोड:</span>
-                    <div className="font-bold text-lg text-orange-800">{member.ifsc}</div>
+                    <div className="font-bold text-lg text-orange-800">{accident.users?.ifsc || "-"}</div>
                   </div>
-
                   <div className="p-4 bg-gradient-to-r from-indigo-100 to-blue-100 rounded-2xl">
                     <span className="text-sm text-gray-600 font-medium">शाखा:</span>
-                    <div className="font-bold text-lg text-indigo-800">{member.branch}</div>
+                    <div className="font-bold text-lg text-indigo-800">{accident.users?.branch || "-"}</div>
                   </div>
-
                   <div className="p-4 bg-gradient-to-r from-red-100 to-pink-100 rounded-2xl">
                     <span className="text-sm text-gray-600 font-medium">दुर्घटना का प्रकार:</span>
-                    <div className="font-bold text-lg text-red-800">{member.accidentType}</div>
+                    <div className="font-bold text-lg text-red-800">{accident.accident_type || accident.custom_accident_type || "-"}</div>
                   </div>
                 </div>
               </div>
