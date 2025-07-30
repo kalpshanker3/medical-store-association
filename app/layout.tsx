@@ -121,6 +121,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
+  // Auto-refresh user profile every 30s and on window focus
+  useEffect(() => {
+    if (!isLoggedIn || !user?.id) return;
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (data) setUser(data);
+    };
+    const interval = setInterval(fetchProfile, 30000); // every 30 seconds
+    const onFocus = () => { fetchProfile(); };
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [isLoggedIn, user?.id]);
+
   const logout = async () => {
     await supabase.auth.signOut()
     setUser(null)
