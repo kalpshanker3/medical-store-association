@@ -65,10 +65,10 @@ export default function DonatePage() {
     try {
       // 1. Upload to Supabase Storage
       const filePath = `donations/${Date.now()}_${selectedFile.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage.from('donations').upload(filePath, selectedFile);
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('receipts').upload(filePath, selectedFile);
       if (uploadError) throw uploadError;
       // 2. Get public URL
-      const { data: urlData } = supabase.storage.from('donations').getPublicUrl(filePath);
+      const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(filePath);
       const receiptUrl = urlData.publicUrl;
       // 3. Insert donation record
       const { error: dbError } = await supabase.from('donations').insert({
