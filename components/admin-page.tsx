@@ -984,7 +984,7 @@ export default function AdminPage(appState: AppState) {
                           {galleryImages.map((image) => (
                             <div key={image.id} className="relative group">
                               <img
-                                src={image.src || "/placeholder.svg"}
+                                src={image.image_url || "/placeholder.svg"}
                                 alt={image.title}
                                 className="w-full h-32 object-cover rounded-lg"
                               />
