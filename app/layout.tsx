@@ -32,17 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // On mount, try to load user from localStorage for smoother UX
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    const storedLoggedIn = localStorage.getItem('isLoggedIn')
-    if (storedUser && storedLoggedIn === 'true') {
-      try {
-        setUser(JSON.parse(storedUser))
-        setIsLoggedIn(true)
-      } catch {}
-    }
-  }, [])
+  // No localStorage for auth state; always use Supabase session
 
   // Sync with Supabase session on mount
   useEffect(() => {
@@ -72,30 +62,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           if (userProfile) {
             setUser(userProfile);
             setIsLoggedIn(true);
-            localStorage.setItem('user', JSON.stringify(userProfile));
-            localStorage.setItem('isLoggedIn', 'true');
             setError(null);
           } else {
             // Profile missing, log out and show error
             setUser(null);
             setIsLoggedIn(false);
-            localStorage.removeItem('user');
-            localStorage.removeItem('isLoggedIn');
             setError('User profile not found. Please login again.');
             await supabase.auth.signOut();
           }
         } else {
           setUser(null);
           setIsLoggedIn(false);
-          localStorage.removeItem('user');
-          localStorage.removeItem('isLoggedIn');
           setError(null);
         }
       } catch (err) {
         setUser(null);
         setIsLoggedIn(false);
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
         setError('Something went wrong. Please refresh or login again.');
         console.error('Error in checkSession:', err);
       }
@@ -114,29 +96,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           if (userProfile) {
             setUser(userProfile);
             setIsLoggedIn(true);
-            localStorage.setItem('user', JSON.stringify(userProfile));
-            localStorage.setItem('isLoggedIn', 'true');
             setError(null);
           } else {
             setUser(null);
             setIsLoggedIn(false);
-            localStorage.removeItem('user');
-            localStorage.removeItem('isLoggedIn');
             setError('User profile not found. Please login again.');
             await supabase.auth.signOut();
           }
         } else {
           setUser(null);
           setIsLoggedIn(false);
-          localStorage.removeItem('user');
-          localStorage.removeItem('isLoggedIn');
           setError(null);
         }
       } catch (err) {
         setUser(null);
         setIsLoggedIn(false);
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
         setError('Something went wrong. Please refresh or login again.');
         console.error('Error in onAuthStateChange:', err);
       }
@@ -151,8 +125,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     await supabase.auth.signOut()
     setUser(null)
     setIsLoggedIn(false)
-    localStorage.removeItem('user')
-    localStorage.removeItem('isLoggedIn')
     setError(null)
   }
 
