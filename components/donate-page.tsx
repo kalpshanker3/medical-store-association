@@ -21,6 +21,7 @@ export default function DonatePage() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedAccidentId, setSelectedAccidentId] = useState<string | null>(null);
+  const [amounts, setAmounts] = useState<{ [accidentId: string]: string }>({});
 
   // Data fetch + real-time
   useEffect(() => {
@@ -55,9 +56,19 @@ export default function DonatePage() {
     }
   };
 
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>, accidentId: string) => {
+    setAmounts((prev) => ({ ...prev, [accidentId]: e.target.value }));
+  };
+
   const handleUpload = async (accident: Accident) => {
+    const amountStr = amounts[accident.id];
+    const amount = Number(amountStr);
     if (!selectedFile || !user) {
       setUploadError("कृपया फ़ाइल चुनें और लॉगिन करें");
+      return;
+    }
+    if (!amountStr || isNaN(amount) || amount <= 0) {
+      setUploadError("कृपया मान्य राशि दर्ज करें");
       return;
     }
     setUploading(true);
@@ -74,7 +85,7 @@ export default function DonatePage() {
       const { error: dbError } = await supabase.from('donations').insert({
         donor_id: user.id,
         recipient_name: accident.users?.name || '',
-        amount: 0, // You can add an amount input if needed
+        amount,
         receipt_image_url: receiptUrl,
         status: 'pending',
         donation_date: new Date().toISOString(),
@@ -82,6 +93,7 @@ export default function DonatePage() {
       if (dbError) throw dbError;
       setUploadSuccess(true);
       setSelectedFile(null);
+      setAmounts((prev) => ({ ...prev, [accident.id]: '' }));
     } catch (err: any) {
       setUploadError(err.message || 'Upload failed');
     } finally {
@@ -158,6 +170,15 @@ export default function DonatePage() {
                     <Upload className="h-6 w-6" />💳 भुगतान की रसीद अपलोड करें:
                   </h4>
                   <div className="flex flex-col md:flex-row items-center gap-4">
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="राशि (₹)"
+                      className="w-32 rounded-xl h-12 border-2 border-green-300 focus:border-green-500"
+                      value={amounts[accident.id] || ''}
+                      onChange={e => handleAmountChange(e, accident.id)}
+                      disabled={uploading}
+                    />
                     <Input
                       type="file"
                       accept="image/*"
