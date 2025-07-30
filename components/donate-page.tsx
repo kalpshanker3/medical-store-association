@@ -13,9 +13,14 @@ interface PageProps {
   isLoggedIn: boolean;
 }
 
-export default function DonatePage(props: PageProps) {
+export default function DonatePage() {
   const { user, isLoggedIn } = useAuth();
   const [deceasedMembers, setDeceasedMembers] = useState<Accident[]>([])
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedAccidentId, setSelectedAccidentId] = useState<string | null>(null);
 
   // Data fetch + real-time
   useEffect(() => {
@@ -41,9 +46,52 @@ export default function DonatePage(props: PageProps) {
     }
   }, [])
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, accidentId: string) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+      setSelectedAccidentId(accidentId);
+      setUploadSuccess(false);
+      setUploadError(null);
+    }
+  };
+
+  const handleUpload = async (accident: Accident) => {
+    if (!selectedFile || !user) {
+      setUploadError("कृपया फ़ाइल चुनें और लॉगिन करें");
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    try {
+      // 1. Upload to Supabase Storage
+      const filePath = `donations/${Date.now()}_${selectedFile.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('donations').upload(filePath, selectedFile);
+      if (uploadError) throw uploadError;
+      // 2. Get public URL
+      const { data: urlData } = supabase.storage.from('donations').getPublicUrl(filePath);
+      const receiptUrl = urlData.publicUrl;
+      // 3. Insert donation record
+      const { error: dbError } = await supabase.from('donations').insert({
+        donor_id: user.id,
+        recipient_name: accident.users?.name || '',
+        amount: 0, // You can add an amount input if needed
+        receipt_image_url: receiptUrl,
+        status: 'pending',
+        donation_date: new Date().toISOString(),
+      });
+      if (dbError) throw dbError;
+      setUploadSuccess(true);
+      setSelectedFile(null);
+    } catch (err: any) {
+      setUploadError(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-100">
-      <Navbar {...props} />
+      <Navbar />
 
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
@@ -114,17 +162,30 @@ export default function DonatePage(props: PageProps) {
                       type="file"
                       accept="image/*"
                       className="flex-1 rounded-xl h-12 border-2 border-green-300 focus:border-green-500"
+                      onChange={e => handleFileChange(e, accident.id)}
+                      disabled={uploading}
                     />
-                    <Button className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 rounded-xl h-12 px-8 font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                      <Upload className="h-5 w-5 mr-2" />📤 अपलोड करें
+                    <Button
+                      className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 rounded-xl h-12 px-8 font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                      onClick={() => handleUpload(accident)}
+                      disabled={uploading || !selectedFile || selectedAccidentId !== accident.id}
+                    >
+                      {uploading && selectedAccidentId === accident.id ? 'Uploading...' : <><Upload className="h-5 w-5 mr-2" />📤 अपलोड करें</>}
                     </Button>
                   </div>
-                  <div className="mt-4 p-4 bg-gradient-to-r from-green-200 to-emerald-200 rounded-xl">
-                    <p className="text-green-700 font-bold text-center flex items-center justify-center gap-2">
-                      ✅ आपकी दान रसीद प्रशासन को भेज दी गई है
-                      <Heart className="h-5 w-5 text-red-500 animate-pulse" />
-                    </p>
-                  </div>
+                  {uploadSuccess && selectedAccidentId === accident.id && (
+                    <div className="mt-4 p-4 bg-gradient-to-r from-green-200 to-emerald-200 rounded-xl">
+                      <p className="text-green-700 font-bold text-center flex items-center justify-center gap-2">
+                        ✅ आपकी दान रसीद प्रशासन को भेज दी गई है
+                        <Heart className="h-5 w-5 text-red-500 animate-pulse" />
+                      </p>
+                    </div>
+                  )}
+                  {uploadError && selectedAccidentId === accident.id && (
+                    <div className="mt-4 p-4 bg-red-100 rounded-xl text-red-700 font-bold text-center">
+                      {uploadError}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
