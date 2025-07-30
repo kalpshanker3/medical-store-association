@@ -21,13 +21,14 @@ import {
   EyeOff,
 } from "lucide-react"
 import Navbar from "./navbar"
-import type { AppState } from "../lib/types"
+import { useAuth } from "../app/layout"
 import { registerUser } from "../lib/auth"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
-export default function RegisterPage(appState: AppState) {
+export default function RegisterPage() {
   const router = useRouter()
+  const { setUser, setIsLoggedIn, isLoggedIn } = useAuth();
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
     phone: "",
@@ -66,10 +67,10 @@ export default function RegisterPage(appState: AppState) {
 
   // Redirect to home if already logged in
   useEffect(() => {
-    if (appState.isLoggedIn) {
+    if (isLoggedIn) {
       router.push("/")
     }
-  }, [appState.isLoggedIn, router])
+  }, [isLoggedIn, router])
 
   // Step 1 submit handler
   const handleStep1Submit = (e: React.FormEvent) => {
@@ -185,8 +186,16 @@ export default function RegisterPage(appState: AppState) {
         setIsLoading(false)
         return
       }
-      appState.setUser(userData)
-      appState.setIsLoggedIn(true)
+      // Fetch the user profile from the database to get all required fields
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userData.id)
+        .single();
+      if (userProfile) {
+        setUser(userProfile);
+        setIsLoggedIn(true);
+      }
       setSuccess("रजिस्ट्रेशन सफल! आपका आवेदन समीक्षा में है।")
       // Redirect to home page after successful registration
       router.push("/")

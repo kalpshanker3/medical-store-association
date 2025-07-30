@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { User, Phone, Shield, CheckCircle, Eye, EyeOff } from "lucide-react"
 import Navbar from "./navbar"
-import type { AppState } from "../lib/types"
+import { useAuth } from "../app/layout"
 import { loginUser } from "../lib/auth"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
-export default function LoginPage(appState: AppState) {
+export default function LoginPage() {
   const router = useRouter()
+  const { setUser, setIsLoggedIn, isLoggedIn } = useAuth();
   const [formData, setFormData] = useState({
     phone: "",
     password: "",
@@ -23,10 +24,10 @@ export default function LoginPage(appState: AppState) {
 
   // Redirect to home if already logged in
   useEffect(() => {
-    if (appState.isLoggedIn) {
+    if (isLoggedIn) {
       router.push("/")
     }
-  }, [appState.isLoggedIn, router])
+  }, [isLoggedIn, router])
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,8 +60,8 @@ export default function LoginPage(appState: AppState) {
         .eq("id", data.user.id)
         .single();
       if (userProfile) {
-        appState.setUser(userProfile);
-        appState.setIsLoggedIn(true);
+        setUser(userProfile);
+        setIsLoggedIn(true);
         setError("");
         // Redirect to home page after successful login
         router.push("/");
@@ -152,7 +153,7 @@ export default function LoginPage(appState: AppState) {
               <div className="mt-6 text-center">
                 <Button
                   variant="ghost"
-                  onClick={() => appState.setCurrentPage("register")}
+                  onClick={() => setIsLoggedIn(false)} // Assuming setIsLoggedIn is the correct way to navigate to register
                   className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-2xl font-semibold px-6 py-3 transition-all duration-300"
                 >
                   नया अकाउंट बनाएं

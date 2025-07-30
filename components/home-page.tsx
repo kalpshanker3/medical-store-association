@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreditCard, Sparkles, Heart, Users, Database } from "lucide-react"
 import Navbar from "./navbar"
-import type { AppState } from "../lib/types"
+import { useAuth } from "../app/layout"
 import { Badge } from "@/components/ui/badge"
 import { supabase, testSupabaseConnection } from "../lib/supabase"
 import { ConnectionStatus } from "./connection-status"
@@ -15,8 +15,9 @@ import { useRouter } from "next/navigation"
 
 type GalleryImage = { image_url: string; title: string }
 
-export default function HomePage(appState: AppState) {
+export default function HomePage() {
   const router = useRouter();
+  const { user, isLoggedIn, setUser, setIsLoggedIn } = useAuth();
   const [typedText, setTypedText] = useState("")
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([])
@@ -87,28 +88,28 @@ export default function HomePage(appState: AppState) {
   useEffect(() => {
     // Fetch latest user profile to get membership status
     const fetchUserProfile = async () => {
-      if (appState.isLoggedIn && appState.user?.id) {
-        const { data, error } = await supabase.from('users').select('*').eq('id', appState.user.id).single()
+      if (isLoggedIn && user?.id) {
+        const { data, error } = await supabase.from('users').select('*').eq('id', user.id).single()
         if (data) {
-          appState.setUser({ ...appState.user, ...data })
+          setUser({ ...user, ...data })
         }
       }
     }
     fetchUserProfile()
-  }, [appState.isLoggedIn, appState.user?.id])
+  }, [isLoggedIn, user?.id])
 
   // Auto-refresh user profile on window focus
   useEffect(() => {
     const handleFocus = () => {
-      if (appState.isLoggedIn && appState.user?.id) {
-        supabase.from('users').select('*').eq('id', appState.user.id).single().then(({ data }) => {
-          if (data) appState.setUser({ ...appState.user, ...data })
+      if (isLoggedIn && user?.id) {
+        supabase.from('users').select('*').eq('id', user.id).single().then(({ data }) => {
+          if (data) setUser({ ...user, ...data })
         })
       }
     }
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
-  }, [appState.isLoggedIn, appState.user?.id])
+  }, [isLoggedIn, user?.id])
 
   // Remove any code that checks or displays database connection status, alerts, or debug info
 
@@ -185,7 +186,7 @@ export default function HomePage(appState: AppState) {
         </Card>
 
         {/* Membership/Donation Section - Only for logged in users */}
-        {appState.isLoggedIn && (
+        {isLoggedIn && (
           <div className="grid md:grid-cols-2 gap-8 sm:gap-12 mb-8 sm:mb-12">
             {/* Membership Card */}
             <Card className="shadow-2xl rounded-3xl sm:rounded-[2rem] border-0 bg-gradient-to-br from-emerald-50/90 via-teal-50/90 to-cyan-50/90 backdrop-blur-xl hover:shadow-3xl transition-all duration-700 transform hover:scale-[1.02] card-touch border border-white/20 group">
@@ -199,17 +200,17 @@ export default function HomePage(appState: AppState) {
                   <p className="text-slate-600 font-medium mb-6 text-lg">वार्षिक सदस्यता: ₹100</p>
                 </div>
                 <div className="mb-6">
-                  {appState.user?.membership_status === "active" ? (
+                  {user?.membership_status === "active" ? (
                     <div className="space-y-3">
                       <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg">
                         ✅ सक्रिय सदस्य
                       </Badge>
-                      {appState.user?.membership_expiry_date && (
+                      {user?.membership_expiry_date && (
                         <div className="text-sm text-slate-600 bg-white/80 p-3 rounded-xl border border-emerald-200">
-                          <p className="font-semibold">सदस्यता समाप्ति: {new Date(appState.user.membership_expiry_date).toLocaleDateString('hi-IN')}</p>
+                          <p className="font-semibold">सदस्यता समाप्ति: {new Date(user.membership_expiry_date).toLocaleDateString('hi-IN')}</p>
                           <p className="text-xs text-slate-500">
                             {(() => {
-                              const expiryDate = new Date(appState.user.membership_expiry_date)
+                              const expiryDate = new Date(user.membership_expiry_date)
                               const today = new Date()
                               const daysLeft = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
                               if (daysLeft > 0) {
@@ -224,7 +225,7 @@ export default function HomePage(appState: AppState) {
                         </div>
                       )}
                     </div>
-                  ) : appState.user?.membership_status === "expired" ? (
+                  ) : user?.membership_status === "expired" ? (
                     <div className="space-y-3">
                       <Badge className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg">
                         ⚠️ सदस्यता समाप्त
@@ -241,7 +242,7 @@ export default function HomePage(appState: AppState) {
                 </div>
 
                 {/* Only show payment button if not active */}
-                {appState.user?.membership_status !== "active" && (
+                {user?.membership_status !== "active" && (
                   <Link href="/membership-payment">
                     <Button
                       className="w-full h-16 sm:h-18 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 rounded-2xl font-bold text-white shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 btn-mobile text-lg border-2 border-white/20 backdrop-blur-sm"
@@ -315,11 +316,11 @@ export default function HomePage(appState: AppState) {
           <Button
             className="h-20 sm:h-24 text-lg sm:text-xl bg-gradient-to-br from-slate-600 via-gray-600 to-zinc-600 hover:from-slate-700 hover:via-gray-700 hover:to-zinc-700 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 active:scale-95 transition-all duration-300 font-bold btn-mobile border-2 border-white/20 backdrop-blur-sm group w-full max-w-lg"
             onClick={() => {
-              if (!appState.isLoggedIn) {
+              if (!isLoggedIn) {
                 alert("कृपया पहले लॉग इन करें");
                 return;
               }
-              if (appState.user?.role !== "admin") {
+              if (user?.role !== "admin") {
                 alert("आपको प्रशासन पैनल का अधिकार नहीं है");
                 return;
               }
@@ -333,7 +334,7 @@ export default function HomePage(appState: AppState) {
           </Button>
         </div>
         {/* Payment History Button for logged in users - Wide row at bottom */}
-        {appState.isLoggedIn && (
+        {isLoggedIn && (
           <div className="text-center mb-12 sm:mb-16">
             <Link href="/payment-history">
               <Button

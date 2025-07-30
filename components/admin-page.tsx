@@ -24,7 +24,7 @@ import {
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import Navbar from "./navbar"
-import type { AppState } from "../lib/types"
+import { useAuth } from "../app/layout"
 import { supabase } from "@/lib/supabase"
 
 interface GalleryImage {
@@ -86,12 +86,15 @@ interface Member {
   status: "active" | "inactive"
 }
 
-export default function AdminPage(appState: AppState) {
+export default function AdminPage() {
+  const { user, isLoggedIn, setUser, setIsLoggedIn } = useAuth();
+
   useEffect(() => {
-    if (!appState.isLoggedIn || appState.user?.role !== "admin") {
-      appState.setCurrentPage("home")
+    if (!isLoggedIn || !user || user.role !== "admin") {
+      // Optionally, redirect to home or show error
+      return;
     }
-  }, [appState.isLoggedIn, appState.user])
+  }, [isLoggedIn, user])
 
   // Loading and error states
   const [loading, setLoading] = useState(false)
@@ -195,7 +198,7 @@ export default function AdminPage(appState: AppState) {
           .from("membership_payments")
           .update({ 
             status: "approved", 
-            approved_by: appState.user.id, 
+            approved_by: user ? user.id : undefined, 
             approved_at: new Date().toISOString(),
             membership_year: currentYear
           })
@@ -217,7 +220,7 @@ export default function AdminPage(appState: AppState) {
       } else if (type === "donation") {
         const { error } = await supabase
           .from("donations")
-          .update({ status: "approved", approved_by: appState.user.id, approved_at: new Date().toISOString() })
+          .update({ status: "approved", approved_by: user ? user.id : undefined, approved_at: new Date().toISOString() })
           .eq("id", id)
         if (error) throw error
       } else if (type === "registration") {
@@ -289,7 +292,7 @@ export default function AdminPage(appState: AppState) {
           title: newImageTitle,
           image_url: imageUrl,
           category: newImageCategory,
-          uploaded_by: appState.user.id,
+          uploaded_by: user ? user.id : undefined,
         })
       if (error) throw error
       setNewImageTitle("")
@@ -337,7 +340,7 @@ export default function AdminPage(appState: AppState) {
         .insert({
           member_id: member.id,
           accident_type: finalAccidentType,
-          created_by: appState.user.id,
+          created_by: user ? user.id : undefined,
         })
       if (error) throw error
       setSelectedMember("")
@@ -399,7 +402,7 @@ export default function AdminPage(appState: AppState) {
           title: notificationTitle,
           type: notificationType,
           body: notificationBody,
-          created_by: appState.user.id,
+          created_by: user ? user.id : undefined,
         })
       if (error) throw error
       setNotificationTitle("")
