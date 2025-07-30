@@ -13,14 +13,14 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 
-// Gallery images will be fetched from database
-const galleryImages: string[] = []
+type GalleryImage = { image_url: string; title: string }
 
 export default function HomePage(appState: AppState) {
   const router = useRouter();
   const [typedText, setTypedText] = useState("")
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [randomImages, setRandomImages] = useState<string[]>([])
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([])
+  const [randomImages, setRandomImages] = useState<GalleryImage[]>([])
 
   const aboutText =
     "हमारी संस्था सभी मेडिकल स्टोर मालिकों को एक साथ लाने का काम करती है। हम एक दूसरे की मदद करते हैं और किसी अप्रिय घटना होने पर उनके परिवार की सहायता करते हैं। यह एक सहयोग और भाईचारे की संस्था है।"
@@ -46,28 +46,42 @@ export default function HomePage(appState: AppState) {
     return () => clearInterval(timer)
   }, [])
 
-  // Initialize random images and set up carousel
+  // Fetch gallery images from Supabase on mount
   useEffect(() => {
-    const randomImgs = getRandomImages()
-    setRandomImages(randomImgs)
-
-    const timer = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % randomImgs.length)
-    }, 3000)
-
-    return () => clearInterval(timer)
+    const fetchGalleryImages = async () => {
+      const { data, error } = await supabase
+        .from('gallery')
+        .select('image_url, title')
+        .order('created_at', { ascending: false })
+      if (data) {
+        setGalleryImages(data)
+        // Pick 4 random images for the slider
+        const shuffled = [...data].sort(() => 0.5 - Math.random())
+        setRandomImages(shuffled.slice(0, 4))
+      }
+    }
+    fetchGalleryImages()
   }, [])
+
+  // Auto-change slide every 3 seconds
+  useEffect(() => {
+    if (randomImages.length === 0) return;
+    const timer = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % randomImages.length)
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [randomImages])
 
   // Refresh random images every 30 seconds
   useEffect(() => {
+    if (galleryImages.length === 0) return;
     const refreshTimer = setInterval(() => {
-      const newRandomImages = getRandomImages()
-      setRandomImages(newRandomImages)
+      const shuffled = [...galleryImages].sort(() => 0.5 - Math.random())
+      setRandomImages(shuffled.slice(0, 4))
       setCurrentImageIndex(0)
-    }, 30000) // Refresh every 30 seconds
-
+    }, 30000)
     return () => clearInterval(refreshTimer)
-  }, [])
+  }, [galleryImages])
 
   // Fetch the user's membership status from the database on mount and update appState.user with latest membership information
   useEffect(() => {
@@ -135,11 +149,17 @@ export default function HomePage(appState: AppState) {
               </div>
               <div className="relative h-72 sm:h-96 rounded-3xl sm:rounded-[2rem] overflow-hidden shadow-2xl group order-1 lg:order-2 border-4 border-white/50">
                 {randomImages.length > 0 && (
-                  <img
-                    src={randomImages[currentImageIndex] || "/placeholder.svg"}
-                    alt="Community"
-                    className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
-                  />
+                  <>
+                    <img
+                      src={randomImages[currentImageIndex]?.image_url || "/placeholder.svg"}
+                      alt={randomImages[currentImageIndex]?.title || "Community"}
+                      className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
+                    />
+                    {/* Show the image title below the image */}
+                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-xl text-base font-semibold max-w-full text-center whitespace-nowrap overflow-hidden text-ellipsis">
+                      {randomImages[currentImageIndex]?.title}
+                    </div>
+                  </>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                 <div className="absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-3 sm:space-x-4">
