@@ -64,12 +64,14 @@ export default function PaymentHistoryPage(props: PageProps) {
     }
   }
 
-  const totalPaid = paymentHistory
-    .filter((payment) => payment.status === "approved")
-    .reduce((sum, payment) => sum + payment.amount, 0)
-
   // Only show payment history for the logged-in user
   const filteredHistory = user ? paymentHistory.filter((p) => p.donor_id === user.id) : [];
+
+  const totalPaid = filteredHistory
+    .filter((payment) => payment.status === "approved")
+    .reduce((sum, payment) => sum + payment.amount, 0);
+  const totalTransactions = filteredHistory.length;
+  const totalApproved = filteredHistory.filter((p) => p.status === "approved").length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-100">
@@ -96,7 +98,7 @@ export default function PaymentHistoryPage(props: PageProps) {
           <Card className="bg-gradient-to-br from-blue-100 to-cyan-200 border-0 rounded-2xl shadow-lg">
             <CardContent className="p-6 text-center">
               <Calendar className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-              <h3 className="text-2xl font-bold text-blue-800">{paymentHistory.length}</h3>
+              <h3 className="text-2xl font-bold text-blue-800">{totalTransactions}</h3>
               <p className="text-blue-600 font-medium">कुल लेन-देन</p>
             </CardContent>
           </Card>
@@ -105,7 +107,7 @@ export default function PaymentHistoryPage(props: PageProps) {
             <CardContent className="p-6 text-center">
               <CreditCard className="h-12 w-12 text-purple-600 mx-auto mb-3" />
               <h3 className="text-2xl font-bold text-purple-800">
-                {paymentHistory.filter((p) => p.status === "approved").length}
+                {totalApproved}
               </h3>
               <p className="text-purple-600 font-medium">सफल भुगतान</p>
             </CardContent>
