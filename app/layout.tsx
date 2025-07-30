@@ -57,47 +57,51 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     checkExpiredMemberships()
 
     const checkSession = async () => {
+      setIsLoading(true);
       try {
-        const { data, error } = await supabase.auth.getSession()
+        const { data } = await supabase.auth.getSession();
+        console.log('Supabase session:', data?.session);
         if (data?.session && data.session.user) {
           // Fetch user profile from DB
           const { data: userProfile, error: userError } = await supabase
             .from('users')
             .select('*')
             .eq('id', data.session.user.id)
-            .single()
+            .single();
+          console.log('User profile:', userProfile, userError);
           if (userProfile) {
-            setUser(userProfile)
-            setIsLoggedIn(true)
-            localStorage.setItem('user', JSON.stringify(userProfile))
-            localStorage.setItem('isLoggedIn', 'true')
-            setError(null)
+            setUser(userProfile);
+            setIsLoggedIn(true);
+            localStorage.setItem('user', JSON.stringify(userProfile));
+            localStorage.setItem('isLoggedIn', 'true');
+            setError(null);
           } else {
             // Profile missing, log out and show error
-            setUser(null)
-            setIsLoggedIn(false)
-            localStorage.removeItem('user')
-            localStorage.removeItem('isLoggedIn')
-            setError('User profile not found. Please login again.')
-            await supabase.auth.signOut()
+            setUser(null);
+            setIsLoggedIn(false);
+            localStorage.removeItem('user');
+            localStorage.removeItem('isLoggedIn');
+            setError('User profile not found. Please login again.');
+            await supabase.auth.signOut();
           }
         } else {
-          setUser(null)
-          setIsLoggedIn(false)
-          localStorage.removeItem('user')
-          localStorage.removeItem('isLoggedIn')
-          setError(null)
+          setUser(null);
+          setIsLoggedIn(false);
+          localStorage.removeItem('user');
+          localStorage.removeItem('isLoggedIn');
+          setError(null);
         }
       } catch (err) {
-        setUser(null)
-        setIsLoggedIn(false)
-        localStorage.removeItem('user')
-        localStorage.removeItem('isLoggedIn')
-        setError('Something went wrong. Please refresh or login again.')
+        setUser(null);
+        setIsLoggedIn(false);
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+        setError('Something went wrong. Please refresh or login again.');
+        console.error('Error in checkSession:', err);
       }
-      setIsLoading(false)
-    }
-    checkSession()
+      setIsLoading(false);
+    };
+    checkSession();
     // Listen for auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
@@ -106,40 +110,42 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             .from('users')
             .select('*')
             .eq('id', session.user.id)
-            .single()
+            .single();
           if (userProfile) {
-            setUser(userProfile)
-            setIsLoggedIn(true)
-            localStorage.setItem('user', JSON.stringify(userProfile))
-            localStorage.setItem('isLoggedIn', 'true')
-            setError(null)
+            setUser(userProfile);
+            setIsLoggedIn(true);
+            localStorage.setItem('user', JSON.stringify(userProfile));
+            localStorage.setItem('isLoggedIn', 'true');
+            setError(null);
           } else {
-            setUser(null)
-            setIsLoggedIn(false)
-            localStorage.removeItem('user')
-            localStorage.removeItem('isLoggedIn')
-            setError('User profile not found. Please login again.')
-            await supabase.auth.signOut()
+            setUser(null);
+            setIsLoggedIn(false);
+            localStorage.removeItem('user');
+            localStorage.removeItem('isLoggedIn');
+            setError('User profile not found. Please login again.');
+            await supabase.auth.signOut();
           }
         } else {
-          setUser(null)
-          setIsLoggedIn(false)
-          localStorage.removeItem('user')
-          localStorage.removeItem('isLoggedIn')
-          setError(null)
+          setUser(null);
+          setIsLoggedIn(false);
+          localStorage.removeItem('user');
+          localStorage.removeItem('isLoggedIn');
+          setError(null);
         }
       } catch (err) {
-        setUser(null)
-        setIsLoggedIn(false)
-        localStorage.removeItem('user')
-        localStorage.removeItem('isLoggedIn')
-        setError('Something went wrong. Please refresh or login again.')
+        setUser(null);
+        setIsLoggedIn(false);
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+        setError('Something went wrong. Please refresh or login again.');
+        console.error('Error in onAuthStateChange:', err);
       }
-    })
+      setIsLoading(false);
+    });
     return () => {
-      listener?.subscription.unsubscribe()
-    }
-  }, [])
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
 
   const logout = async () => {
     await supabase.auth.signOut()
