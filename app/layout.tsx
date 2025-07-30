@@ -30,10 +30,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [user, setUser] = useState<User | null>(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // On mount, try to load user from localStorage for smoother UX
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user')
+    const storedLoggedIn = localStorage.getItem('isLoggedIn')
+    if (storedUser && storedLoggedIn === 'true') {
+      try {
+        setUser(JSON.parse(storedUser))
+        setIsLoggedIn(true)
+      } catch {}
+    }
+  }, [])
 
   // Sync with Supabase session on mount
   useEffect(() => {
-    // Check for expired memberships
     const checkExpiredMemberships = async () => {
       try {
         const { error } = await supabase.rpc('check_expired_memberships')
@@ -42,11 +54,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         console.error('Failed to check expired memberships:', err)
       }
     }
-    
-    // Check expired memberships on app load
     checkExpiredMemberships()
-    
-    // Remove timeout logic, just fetch session/profile as before
+
     const checkSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSession()
@@ -62,23 +71,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             setIsLoggedIn(true)
             localStorage.setItem('user', JSON.stringify(userProfile))
             localStorage.setItem('isLoggedIn', 'true')
+            setError(null)
           } else {
+            // Profile missing, log out and show error
             setUser(null)
             setIsLoggedIn(false)
             localStorage.removeItem('user')
             localStorage.removeItem('isLoggedIn')
+            setError('User profile not found. Please login again.')
+            await supabase.auth.signOut()
           }
         } else {
           setUser(null)
           setIsLoggedIn(false)
           localStorage.removeItem('user')
           localStorage.removeItem('isLoggedIn')
+          setError(null)
         }
       } catch (err) {
         setUser(null)
         setIsLoggedIn(false)
         localStorage.removeItem('user')
         localStorage.removeItem('isLoggedIn')
+        setError('Something went wrong. Please refresh or login again.')
       }
       setIsLoading(false)
     }
@@ -97,23 +112,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             setIsLoggedIn(true)
             localStorage.setItem('user', JSON.stringify(userProfile))
             localStorage.setItem('isLoggedIn', 'true')
+            setError(null)
           } else {
             setUser(null)
             setIsLoggedIn(false)
             localStorage.removeItem('user')
             localStorage.removeItem('isLoggedIn')
+            setError('User profile not found. Please login again.')
+            await supabase.auth.signOut()
           }
         } else {
           setUser(null)
           setIsLoggedIn(false)
           localStorage.removeItem('user')
           localStorage.removeItem('isLoggedIn')
+          setError(null)
         }
       } catch (err) {
         setUser(null)
         setIsLoggedIn(false)
         localStorage.removeItem('user')
         localStorage.removeItem('isLoggedIn')
+        setError('Something went wrong. Please refresh or login again.')
       }
     })
     return () => {
@@ -127,6 +147,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     setIsLoggedIn(false)
     localStorage.removeItem('user')
     localStorage.removeItem('isLoggedIn')
+    setError(null)
   }
 
   if (isLoading) {
@@ -149,6 +170,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p className="text-gray-600">लोड हो रहा है...</p>
+              </div>
+            </div>
+          </ThemeProvider>
+        </body>
+      </html>
+    )
+  }
+
+  if (error) {
+    return (
+      <html lang="en">
+        <head>
+          <title>Medical Store Association</title>
+          <meta name="description" content="Medical Store Association Management System" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="theme-color" content="#3b82f6" />
+        </head>
+        <body className={inter.className}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-red-600 text-lg font-semibold mb-4">{error}</div>
+                <button
+                  className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition"
+                  onClick={logout}
+                >
+                  लॉगिन पेज पर जाएं
+                </button>
               </div>
             </div>
           </ThemeProvider>
